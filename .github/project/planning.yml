@@ -78,7 +78,17 @@ issues:
 
   59: { priority: P0, area: DevOps,   weight: 8,  estimate_days: 4,   blocked_by: [5, 47] }
   64: { priority: P0, area: DevOps,   weight: 8,  estimate_days: 4,   blocked_by: [59] }
-  60: { priority: P0, area: DevOps,   weight: 8,  estimate_days: 4,   blocked_by: [8, 59, 64] }
+  91: { priority: P0, area: DevOps,   weight: 8,  estimate_days: 4,   blocked_by: [59],     parent: 64 }
+  92: { priority: P1, area: DevOps,   weight: 5,  estimate_days: 2.5, blocked_by: [91],     parent: 64 }
+  93: { priority: P1, area: DevOps,   weight: 5,  estimate_days: 2.5, blocked_by: [91],     parent: 64 }
+  94: { priority: P1, area: DevOps,   weight: 5,  estimate_days: 2.5, blocked_by: [59],     parent: 64 }
+  95: { priority: P1, area: DevOps,   weight: 3,  estimate_days: 1.5, blocked_by: [91],     parent: 64 }
+  96: { priority: P1, area: DevOps,   weight: 5,  estimate_days: 3,   blocked_by: [91],     parent: 64 }
+  97: { priority: P0, area: DevOps,   weight: 5,  estimate_days: 3,   blocked_by: [91],     parent: 64 }
+  98: { priority: P0, area: Docs,     weight: 5,  estimate_days: 2.5, blocked_by: [60, 91], parent: 64 }
+  99: { priority: P1, area: DevOps,   weight: 5,  estimate_days: 3,   blocked_by: [97],     parent: 64 }
+  100:{ priority: P1, area: Security, weight: 8,  estimate_days: 4,   blocked_by: [91],     parent: 64 }
+  60: { priority: P0, area: DevOps,   weight: 8,  estimate_days: 4,   blocked_by: [8, 54, 55, 58, 59, 91] }
   61: { priority: P0, area: Agents,   weight: 8,  estimate_days: 4,   blocked_by: [34, 35, 36, 37, 38, 59] }
   62: { priority: P0, area: Docs,     weight: 8,  estimate_days: 4,   blocked_by: [47, 59, 60, 61] }
-  63: { priority: P0, area: DevOps,   weight: 5,  estimate_days: 2.5, blocked_by: [21, 27, 46, 54, 55, 56, 57, 58, 60, 61, 62, 64] }
+  63: { priority: P0, area: DevOps,   weight: 5,  estimate_days: 2.5, blocked_by: [21, 27, 46, 54, 55, 56, 57, 58, 60, 61, 62, 64, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100] }
