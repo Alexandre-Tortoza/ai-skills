@@ -1,7 +1,5 @@
 version: 1
-project:
-  title: "ai-skills Roadmap"
-  visibility: PUBLIC
+roadmap:
   epic: 3
   target_release: "v0"
 issues:
