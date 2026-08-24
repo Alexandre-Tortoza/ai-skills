@@ -1,0 +1,32 @@
+labels:
+  - { name: "type:epic", color: "5319E7", description: "Top-level outcome spanning multiple issues" }
+  - { name: "type:feature", color: "1D76DB", description: "User-facing capability or enhancement" }
+  - { name: "type:task", color: "D4C5F9", description: "Internal engineering task" }
+  - { name: "type:bug", color: "D73A4A", description: "Defect or regression" }
+  - { name: "type:skill", color: "0E8A16", description: "Skill or knowledge-library work" }
+  - { name: "type:security", color: "B60205", description: "Security or trust-boundary work" }
+  - { name: "type:docs", color: "0075CA", description: "Documentation-only work" }
+  - { name: "type:research", color: "C2E0C6", description: "Investigation, spike, benchmark, or design validation" }
+  - { name: "priority:P0", color: "B60205", description: "Critical path / must ship" }
+  - { name: "priority:P1", color: "D93F0B", description: "Important for the planned release" }
+  - { name: "priority:P2", color: "FBCA04", description: "Useful but deferrable" }
+  - { name: "status:triage", color: "EDEDED", description: "Needs prioritization or clarification" }
+  - { name: "status:blocked", color: "000000", description: "Cannot progress until a dependency is resolved" }
+  - { name: "area:core", color: "0052CC", description: "Domain model and application architecture" }
+  - { name: "area:library", color: "006B75", description: "Canonical Skill/Wiki library and Git-backed content" }
+  - { name: "area:storage", color: "006B75", description: "SQLite schema, migrations, indexing, persistence" }
+  - { name: "area:search", color: "5319E7", description: "FTS, embeddings, retrieval, ranking" }
+  - { name: "area:mcp", color: "5319E7", description: "Model Context Protocol server and tools" }
+  - { name: "area:api", color: "1D76DB", description: "HTTP API and contracts" }
+  - { name: "area:cli", color: "0E8A16", description: "Command-line interface" }
+  - { name: "area:sync", color: "0E8A16", description: "Repository configuration and materialization" }
+  - { name: "area:agents", color: "0E8A16", description: "Claude, Codex, Cursor, Gemini and generic adapters" }
+  - { name: "area:llm", color: "BFDADC", description: "LLM providers, review, proposals and evolution" }
+  - { name: "area:web", color: "FBCA04", description: "Web dashboard" }
+  - { name: "area:security", color: "B60205", description: "Trust, authentication, authorization and supply chain" }
+  - { name: "area:devops", color: "0366D6", description: "CI/CD, packaging, release and repository automation" }
+  - { name: "effort:XS", color: "C5DEF5", description: "Small, usually <= half day" }
+  - { name: "effort:S", color: "C5DEF5", description: "Usually around one day" }
+  - { name: "effort:M", color: "BFD4F2", description: "Usually 2-3 focused days" }
+  - { name: "effort:L", color: "9CBCE8", description: "Usually 4-5 focused days" }
+  - { name: "effort:XL", color: "7AA3D8", description: "Too large for a normal issue; should be decomposed where possible" }
