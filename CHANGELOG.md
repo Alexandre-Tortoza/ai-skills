@@ -9,9 +9,9 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 ### Added
 
 - Initial project governance, milestones and issue forms.
-- Architecture and v0.1 implementation backlog.
+- Architecture and v0 implementation backlog.
 - Open-source project baseline documentation.
-- Native GitHub planning model for milestones, Projects v2 and issue relationships.
+- Native GitHub planning model for milestones, the single `ai-skills Roadmap` Project and issue relationships.
 
 ### Security
 

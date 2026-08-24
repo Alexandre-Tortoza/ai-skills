@@ -48,7 +48,7 @@ The README should answer what the tool solves, who benefits and how to try it be
 
 Detailed architecture, protocols, migrations, security and operations belong under `docs/`.
 
-Final v0.1 documentation consolidation is tracked by #62.
+Final v0 documentation consolidation is tracked by #62.
 
 ## Predictable automation for humans and agents
 
@@ -71,11 +71,11 @@ Use the platform rather than encoding planning into prose:
 - milestones represent delivery phases;
 - parent/sub-issue relationships represent Epic hierarchy;
 - blocked-by/blocking relationships represent dependencies;
-- Projects v2 fields hold priority, area, Fibonacci weight, estimate, dates/status and release targeting;
+- the single `ai-skills Roadmap` GitHub Project holds priority, area, Fibonacci weight, estimate, dates/status and release targeting;
 - labels are reserved for lightweight classification rather than duplicating Project fields.
 
 Repository settings that cannot be represented entirely in Git are tracked by #66.
 
 ## Readiness rule
 
-`v0.1.0` is not ready while any mandatory release gate in #63 remains unsatisfied. A polished core algorithm is not an exception to installation, CI, documentation, security or release integrity requirements.
+The v0 roadmap is not ready while any mandatory release gate in #63 remains unsatisfied. A polished core algorithm is not an exception to installation, CI, documentation, security or release integrity requirements.
