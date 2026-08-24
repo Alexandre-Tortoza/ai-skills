@@ -4,7 +4,7 @@ on:
   push:
     branches: [main]
     paths:
-      - .github/project/planning.yml
+      - .github/planning.yml
       - .github/labels.yml
       - .github/workflows/planning-sync.yml
   workflow_dispatch:
@@ -27,7 +27,7 @@ jobs:
       - uses: actions/checkout@v7
 
       - name: Convert planning YAML to JSON
-        run: ruby -ryaml -rjson -e 'puts JSON.generate(YAML.load_file(".github/project/planning.yml"))' > "$RUNNER_TEMP/planning.json"
+        run: ruby -ryaml -rjson -e 'puts JSON.generate(YAML.load_file(".github/planning.yml"))' > "$RUNNER_TEMP/planning.json"
 
       - name: Synchronize parent/sub-issue and blocked-by relationships
         shell: bash
@@ -36,7 +36,7 @@ jobs:
 
           plan="$RUNNER_TEMP/planning.json"
           repo="$GITHUB_REPOSITORY"
-          epic=$(jq -r '.project.epic' "$plan")
+          epic=$(jq -r '.roadmap.epic' "$plan")
 
           api_post() {
             local endpoint="$1"
@@ -104,7 +104,7 @@ jobs:
               echo "#$issue blocked by #$blocker"
             done
           done < <(ruby -ryaml -e '
-            p = YAML.load_file(".github/project/planning.yml")
+            p = YAML.load_file(".github/planning.yml")
             p.fetch("issues").each do |n, meta|
               deps = Array(meta["blocked_by"])
               puts "#{n}|#{deps.join(",")}" unless deps.empty?

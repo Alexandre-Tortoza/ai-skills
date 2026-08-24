@@ -15,11 +15,11 @@ Issue bodies remain technical specifications. Planning metadata is kept out of p
 | Technical area | `area:*` label |
 | Relative effort | Fibonacci `weight:*` label |
 | Triage / visible blocking state | `status:triage` / `status:blocked` labels |
-| Focused engineering-day estimate | `.github/project/planning.yml` |
+| Focused engineering-day estimate | `.github/planning.yml` |
 | Detailed requirements and acceptance criteria | Issue body |
-| Reproducible planning metadata | `.github/project/planning.yml` |
+| Reproducible planning metadata | `.github/planning.yml` |
 
-The GitHub Project feature is not required by the repository and no Project token or Project bootstrap workflow is used.
+The GitHub Projects feature is disabled for this repository. No Project token or Project bootstrap workflow is used.
 
 ## Native hierarchy and dependencies
 
@@ -27,7 +27,7 @@ The GitHub Project feature is not required by the repository and no Project toke
 - Nested work may use another managed issue as parent, for example distribution work under #64.
 - Prerequisites use GitHub `blocked by` / `blocking` relationships.
 - Milestones group work into delivery phases M0-M8.
-- `.github/workflows/planning-sync.yml` materializes the relationships declared in `.github/project/planning.yml`.
+- `.github/workflows/planning-sync.yml` materializes the relationships declared in `.github/planning.yml`.
 
 Dependency synchronization is additive: manually added dependencies are not silently removed. Parent assignment is authoritative for issues managed by the planning manifest.
 
@@ -49,7 +49,7 @@ The focused `estimate_days` value remains in the planning manifest because GitHu
 Two permanent workflows maintain the planning model:
 
 1. `.github/workflows/governance.yml` creates and updates the canonical label taxonomy and milestones from `.github/labels.yml` and `.github/milestones.yml`.
-2. `.github/workflows/planning-sync.yml` synchronizes parent/sub-issue relationships, dependencies, priority, area and Fibonacci weight from `.github/project/planning.yml`.
+2. `.github/workflows/planning-sync.yml` synchronizes parent/sub-issue relationships, dependencies, priority, area and Fibonacci weight from `.github/planning.yml`.
 
 The workflows use the repository-scoped `GITHUB_TOKEN`; no personal access token is required.
 
