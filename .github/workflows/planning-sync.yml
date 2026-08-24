@@ -1,10 +1,11 @@
-name: Sync native issue relationships
+name: Sync issue planning metadata and relationships
 
 on:
   push:
     branches: [main]
     paths:
       - .github/project/planning.yml
+      - .github/labels.yml
       - .github/workflows/planning-sync.yml
   workflow_dispatch:
 
@@ -13,11 +14,11 @@ permissions:
   issues: write
 
 concurrency:
-  group: native-issue-relationships
+  group: issue-planning-sync
   cancel-in-progress: false
 
 jobs:
-  relationships:
+  sync:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
@@ -109,3 +110,37 @@ jobs:
               puts "#{n}|#{deps.join(",")}" unless deps.empty?
             end
           ')
+
+      - name: Synchronize priority area and Fibonacci weight labels
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          plan="$RUNNER_TEMP/planning.json"
+          repo="$GITHUB_REPOSITORY"
+
+          while IFS='|' read -r issue priority area weight; do
+            [[ -z "$issue" ]] && continue
+
+            desired_priority="priority:$priority"
+            desired_area="area:$(tr '[:upper:]' '[:lower:]' <<<"$area")"
+            desired_weight="weight:$weight"
+
+            current=$(gh issue view "$issue" --repo "$repo" --json labels --jq '.labels[].name')
+
+            while IFS= read -r label; do
+              [[ -z "$label" ]] && continue
+              case "$label" in
+                priority:*) [[ "$label" == "$desired_priority" ]] || gh issue edit "$issue" --repo "$repo" --remove-label "$label" ;;
+                area:*)     [[ "$label" == "$desired_area" ]] || gh issue edit "$issue" --repo "$repo" --remove-label "$label" ;;
+                weight:*)   [[ "$label" == "$desired_weight" ]] || gh issue edit "$issue" --repo "$repo" --remove-label "$label" ;;
+              esac
+            done <<<"$current"
+
+            gh issue edit "$issue" --repo "$repo" \
+              --add-label "$desired_priority" \
+              --add-label "$desired_area" \
+              --add-label "$desired_weight" >/dev/null
+
+            echo "synced planning labels for #$issue"
+          done < <(jq -r '.issues | to_entries[] | "\(.key)|\(.value.priority)|\(.value.area)|\(.value.weight)"' "$plan" | sort -t'|' -k1,1n)
