@@ -14,15 +14,40 @@ jobs:
       GH_TOKEN: ${{ secrets.PROJECTS_TOKEN }}
     steps:
       - uses: actions/checkout@v4
-      - name: Ensure project exists
+      - name: Ensure project, repository link and planning fields
         shell: bash
         run: |
           set -euo pipefail
           owner="${GITHUB_REPOSITORY_OWNER}"
+          repo="${GITHUB_REPOSITORY}"
           title="ai-skills Roadmap"
-          if gh project list --owner "$owner" --format json --limit 100 | jq -e --arg title "$title" '.projects[] | select(.title == $title)' >/dev/null; then
-            echo "Project already exists: $title"
-          else
+
+          project_number=$(gh project list --owner "$owner" --format json --limit 100 | jq -r --arg title "$title" '.projects[] | select(.title == $title) | .number' | head -n1)
+          if [[ -z "$project_number" ]]; then
             gh project create --owner "$owner" --title "$title"
+            project_number=$(gh project list --owner "$owner" --format json --limit 100 | jq -r --arg title "$title" '.projects[] | select(.title == $title) | .number' | head -n1)
           fi
-          echo "Configure repository linkage and fields Status, Priority, Area, Effort, Milestone and Target release in the project UI or extend this workflow with a PAT authorized for Projects v2."
+
+          gh project link "$project_number" --owner "$owner" --repo "$repo" || true
+
+          ensure_field() {
+            local name="$1" type="$2" options="${3:-}"
+            if gh project field-list "$project_number" --owner "$owner" --format json | jq -e --arg name "$name" '.fields[] | select(.name == $name)' >/dev/null; then
+              echo "field exists: $name"
+              return
+            fi
+            if [[ "$type" == "SINGLE_SELECT" ]]; then
+              gh project field-create "$project_number" --owner "$owner" --name "$name" --data-type "$type" --single-select-options "$options"
+            else
+              gh project field-create "$project_number" --owner "$owner" --name "$name" --data-type "$type"
+            fi
+          }
+
+          ensure_field "Priority" "SINGLE_SELECT" "P0,P1,P2"
+          ensure_field "Area" "SINGLE_SELECT" "Core,Library,Storage,Search,MCP,API,CLI,Sync,Agents,LLM,Web,Security,DevOps"
+          ensure_field "Weight" "NUMBER"
+          ensure_field "Target release" "SINGLE_SELECT" "v0.1,Post-v0.1"
+          ensure_field "Start date" "DATE"
+          ensure_field "Target date" "DATE"
+
+          echo "Project #$project_number configured. Built-in Status, Labels, Assignees and Milestone fields remain available automatically."

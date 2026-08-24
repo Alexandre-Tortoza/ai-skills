@@ -6,40 +6,82 @@ body:
   - type: textarea
     id: objective
     attributes:
-      label: Objective
-      description: State the concrete engineering outcome.
+      label: Objective and measurable outcome
+      description: State the concrete engineering result and why it matters.
     validations:
       required: true
   - type: textarea
     id: context
     attributes:
       label: Technical context
-      description: Explain architecture, constraints, interfaces, and why this work is needed.
+      description: Explain current architecture, constraints, interfaces, invariants, and evidence motivating the work.
     validations:
       required: true
   - type: textarea
     id: implementation
     attributes:
       label: Implementation notes
-      description: Proposed components, modules, APIs, migrations, or algorithms. This is guidance, not a rigid prescription.
+      description: Proposed components, modules, APIs, migrations, algorithms, or sequencing. Guidance rather than a rigid prescription.
+    validations:
+      required: true
+  - type: textarea
+    id: deliverables
+    attributes:
+      label: Deliverables
+      value: |
+        - [ ] Code / infrastructure change
+        - [ ] Automated tests
+        - [ ] Documentation / ADR where applicable
+        - [ ] Migration or compatibility notes where applicable
+    validations:
+      required: true
   - type: textarea
     id: acceptance
     attributes:
       label: Definition of done
       value: |
-        - [ ] Implementation is complete and reviewed.
-        - [ ] Automated tests cover the critical behavior.
-        - [ ] Documentation or ADRs are updated where applicable.
-        - [ ] No unresolved security or migration risk remains.
+        - [ ] Acceptance behavior is objectively verifiable.
+        - [ ] Critical paths and failure modes are tested.
+        - [ ] Lint, formatting, static analysis and CI pass.
+        - [ ] Security/trust boundaries have been reviewed.
+        - [ ] No unresolved migration or backwards-compatibility risk remains.
+    validations:
+      required: true
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      options: [P0, P1, P2]
+    validations:
+      required: true
+  - type: dropdown
+    id: weight
+    attributes:
+      label: Fibonacci story weight
+      options: ["1", "2", "3", "5", "8", "13", "21"]
+    validations:
+      required: true
+  - type: input
+    id: estimate
+    attributes:
+      label: Estimated implementation time
+      placeholder: e.g. 4 hours, 1-2 days, 1 week
     validations:
       required: true
   - type: textarea
     id: dependencies
     attributes:
-      label: Dependencies
+      label: Dependencies and critical path
       placeholder: "Blocked by #...; blocks #..."
-  - type: input
-    id: effort
+  - type: textarea
+    id: validation
     attributes:
-      label: Initial effort estimate
-      placeholder: XS / S / M / L / XL
+      label: Validation and test strategy
+      description: State how reviewers can prove the task is correct, including benchmarks or security tests when relevant.
+    validations:
+      required: true
+  - type: textarea
+    id: risks
+    attributes:
+      label: Risks / rollback
+      description: Identify operational, security, data, migration, performance, and rollback considerations.

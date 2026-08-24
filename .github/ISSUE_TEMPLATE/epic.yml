@@ -1,0 +1,61 @@
+name: Epic
+description: Define a multi-milestone product or architectural outcome that will be decomposed into executable issues
+title: "[Epic]: "
+labels: ["type:epic", "priority:P0", "weight:21"]
+body:
+  - type: textarea
+    id: outcome
+    attributes:
+      label: Outcome
+      description: State the product/engineering outcome and how success is measured.
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem and strategic context
+    validations:
+      required: true
+  - type: textarea
+    id: architecture
+    attributes:
+      label: Architecture / solution outline
+      description: Summarize major boundaries, flows, invariants and design decisions. Use Mermaid when it improves clarity.
+    validations:
+      required: true
+  - type: textarea
+    id: workstreams
+    attributes:
+      label: Workstreams / child issues
+      value: |
+        - [ ] Foundation
+        - [ ] Core capabilities
+        - [ ] Security/reliability
+        - [ ] Distribution/release
+    validations:
+      required: true
+  - type: textarea
+    id: milestones
+    attributes:
+      label: Milestones and exit criteria
+    validations:
+      required: true
+  - type: textarea
+    id: dependencies
+    attributes:
+      label: Critical path and dependencies
+    validations:
+      required: true
+  - type: textarea
+    id: risks
+    attributes:
+      label: Major risks and mitigations
+    validations:
+      required: true
+  - type: textarea
+    id: metrics
+    attributes:
+      label: Success metrics
+      description: Include functional, quality, performance, security, adoption, and release-readiness metrics where relevant.
+    validations:
+      required: true
