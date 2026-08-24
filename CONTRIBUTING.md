@@ -13,12 +13,26 @@ Priority, area, Fibonacci weight, delivery status, target release and dates belo
 
 ## Development workflow
 
-1. Create a focused branch such as `feat/...`, `fix/...`, `refactor/...`, `docs/...` or `chore/...`.
-2. Keep one pull request centered on one reviewable outcome.
-3. Link the issue with `Closes #<number>` when the PR fully resolves it.
-4. Add or update automated tests for changed behavior and failure cases.
-5. Update documentation and `CHANGELOG.md` when behavior visible to users changes.
-6. Record durable architectural decisions as ADRs under `docs/adr/` once the ADR process is established.
+The repository uses the promotion flow documented in [`docs/branching-strategy.md`](docs/branching-strategy.md):
+
+```text
+feature/fix/docs/chore -> dev -> qa -> main
+```
+
+`main` is production/stable, `qa` is validation, and `dev` is the normal integration target.
+
+1. Start from the current `dev` branch for normal work.
+2. Create a focused branch such as `feat/...`, `fix/...`, `refactor/...`, `docs/...` or `chore/...`.
+3. Open the pull request against `dev`. External fork pull requests also target `dev`.
+4. Keep one pull request centered on one reviewable outcome.
+5. Link the issue with `Closes #<number>` when the PR fully resolves it.
+6. Add or update automated tests for changed behavior and failure cases.
+7. Update documentation and `CHANGELOG.md` when behavior visible to users changes.
+8. Record durable architectural decisions as ADRs under `docs/adr/` once the ADR process is established.
+9. Promotion to `qa` happens only through a `dev -> qa` pull request.
+10. Promotion to production happens only through a `qa -> main` pull request.
+
+Do not open feature/fix pull requests directly against `qa` or `main`.
 
 Standard repository commands such as `bin/setup` and `bin/check` are tracked by #65. Until they exist, follow commands supported by the current checkout; do not introduce undocumented personal scripts as required contributor steps.
 

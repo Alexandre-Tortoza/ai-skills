@@ -1,0 +1,63 @@
+name: Apply branch rulesets
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  apply:
+    name: Apply repository branch protections
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.REPOSITORY_ADMIN_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Require repository administration token
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -z "${GH_TOKEN:-}" ]]; then
+            echo "::error::Configure the REPOSITORY_ADMIN_TOKEN secret with Administration: write permission for this repository."
+            exit 1
+          fi
+
+      - name: Create or update managed rulesets
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          for spec in .github/rulesets/*.json; do
+            name=$(jq -r '.name' "$spec")
+            existing_id=$(gh api \
+              -H "X-GitHub-Api-Version: 2026-03-10" \
+              "repos/${GITHUB_REPOSITORY}/rulesets" \
+              --jq ".[] | select(.name == \"${name}\") | .id" | head -n1 || true)
+
+            if [[ -n "$existing_id" ]]; then
+              gh api --method PUT \
+                -H "X-GitHub-Api-Version: 2026-03-10" \
+                "repos/${GITHUB_REPOSITORY}/rulesets/${existing_id}" \
+                --input "$spec" >/dev/null
+              echo "updated ruleset: $name (#$existing_id)"
+            else
+              gh api --method POST \
+                -H "X-GitHub-Api-Version: 2026-03-10" \
+                "repos/${GITHUB_REPOSITORY}/rulesets" \
+                --input "$spec" >/dev/null
+              echo "created ruleset: $name"
+            fi
+          done
+
+      - name: Verify protected branches
+        shell: bash
+        run: |
+          set -euo pipefail
+          for branch in dev qa main; do
+            gh api \
+              -H "X-GitHub-Api-Version: 2026-03-10" \
+              "repos/${GITHUB_REPOSITORY}/rules/branches/${branch}" >/dev/null
+            echo "verified rules for $branch"
+          done

@@ -1,0 +1,65 @@
+name: Branch flow policy
+
+on:
+  pull_request:
+    branches:
+      - dev
+      - qa
+      - main
+
+permissions:
+  contents: read
+  pull-requests: read
+
+concurrency:
+  group: branch-flow-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: Validate promotion path
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate source and target branches
+        shell: bash
+        env:
+          BASE_BRANCH: ${{ github.base_ref }}
+          HEAD_BRANCH: ${{ github.head_ref }}
+          BASE_REPOSITORY: ${{ github.repository }}
+          HEAD_REPOSITORY: ${{ github.event.pull_request.head.repo.full_name }}
+        run: |
+          set -euo pipefail
+
+          echo "Validating ${HEAD_REPOSITORY}:${HEAD_BRANCH} -> ${BASE_REPOSITORY}:${BASE_BRANCH}"
+
+          case "$BASE_BRANCH" in
+            dev)
+              # Contributions and topic branches enter through dev. Fork PRs are
+              # intentionally supported for open-source contributors.
+              if [[ "$HEAD_REPOSITORY" == "$BASE_REPOSITORY" && ( "$HEAD_BRANCH" == "qa" || "$HEAD_BRANCH" == "main" ) ]]; then
+                echo "::error::qa/main cannot be merged backwards directly into dev. Use a dedicated sync/fix branch."
+                exit 1
+              fi
+              ;;
+
+            qa)
+              if [[ "$HEAD_REPOSITORY" != "$BASE_REPOSITORY" || "$HEAD_BRANCH" != "dev" ]]; then
+                echo "::error::qa only accepts promotion pull requests from the repository dev branch."
+                exit 1
+              fi
+              ;;
+
+            main)
+              if [[ "$HEAD_REPOSITORY" != "$BASE_REPOSITORY" || "$HEAD_BRANCH" != "qa" ]]; then
+                echo "::error::main is production and only accepts promotion pull requests from the repository qa branch."
+                exit 1
+              fi
+              ;;
+
+            *)
+              echo "::error::Unexpected protected target branch: $BASE_BRANCH"
+              exit 1
+              ;;
+          esac
+
+          echo "Branch promotion path is valid."
