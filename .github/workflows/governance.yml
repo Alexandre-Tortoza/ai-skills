@@ -19,7 +19,7 @@ jobs:
     env:
       GH_TOKEN: ${{ github.token }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Convert governance YAML to JSON
         shell: bash
@@ -29,7 +29,7 @@ jobs:
           ruby -ryaml -rjson -e 'puts JSON.generate(YAML.load_file(".github/milestones.yml"))' > "$RUNNER_TEMP/milestones.json"
 
       - name: Synchronize labels and milestones
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         env:
           LABELS_JSON: ${{ runner.temp }}/labels.json
           MILESTONES_JSON: ${{ runner.temp }}/milestones.json

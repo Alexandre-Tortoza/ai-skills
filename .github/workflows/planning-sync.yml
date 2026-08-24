@@ -18,7 +18,7 @@ jobs:
     env:
       GH_TOKEN: ${{ github.token }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Convert planning YAML to JSON
         run: ruby -ryaml -rjson -e 'puts JSON.generate(YAML.load_file(".github/project/planning.yml"))' > "$RUNNER_TEMP/planning.json"
