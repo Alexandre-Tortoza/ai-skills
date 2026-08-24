@@ -1,0 +1,13 @@
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    groups:
+      github-actions:
+        patterns:
+          - "*"
+
+# Cargo and npm ecosystems will be added once their manifests exist so
+# Dependabot does not report missing-manifest configuration errors during bootstrap.

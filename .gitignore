@@ -1,0 +1,33 @@
+# Rust
+/target/
+
+# Frontend
+/web/node_modules/
+/web/dist/
+
+# Local configuration and secrets
+.env
+.env.*
+!.env.example
+config/*.env
+!config/*.env.example
+
+# Local ai-skills runtime state
+.ai-skills-cache/
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
+
+# Editors / OS
+.DS_Store
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Coverage / temporary output
+coverage/
+.tmp/
+tmp/

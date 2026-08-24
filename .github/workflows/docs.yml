@@ -1,0 +1,55 @@
+name: Documentation hygiene
+
+on:
+  pull_request:
+    paths:
+      - "**/*.md"
+      - ".github/workflows/docs.yml"
+  push:
+    branches: [main]
+    paths:
+      - "**/*.md"
+      - ".github/workflows/docs.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  local-links:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate local Markdown links
+        shell: python
+        run: |
+          import pathlib
+          import re
+          import sys
+          from urllib.parse import unquote
+
+          root = pathlib.Path.cwd().resolve()
+          failures = []
+          pattern = re.compile(r"(?<!!)\[[^\]]*\]\(([^)]+)\)")
+
+          for md in root.rglob("*.md"):
+              if any(part in {"target", "node_modules", ".git"} for part in md.parts):
+                  continue
+              text = md.read_text(encoding="utf-8")
+              for raw in pattern.findall(text):
+                  href = raw.strip().split()[0].strip("<>")
+                  if not href or href.startswith(("http://", "https://", "mailto:", "#")):
+                      continue
+                  path_part = unquote(href.split("#", 1)[0])
+                  if not path_part:
+                      continue
+                  target = (root / path_part.lstrip("/")) if path_part.startswith("/") else (md.parent / path_part)
+                  if not target.exists():
+                      failures.append(f"{md.relative_to(root)} -> {href}")
+
+          if failures:
+              print("Broken local Markdown links:")
+              for failure in failures:
+                  print(f"- {failure}")
+              sys.exit(1)
+
+          print("Local Markdown links are valid.")
