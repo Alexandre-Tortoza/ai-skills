@@ -12,7 +12,7 @@ jobs:
     env:
       GH_TOKEN: ${{ secrets.PROJECTS_TOKEN }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Verify Projects credential
         shell: bash
