@@ -8,11 +8,13 @@ The implementation is tracked by #59, #60 and #64. This document defines the con
 
 Use Semantic Versioning. During pre-1.0 development, incompatible changes are still documented explicitly because users and agent integrations depend on configuration/protocol stability.
 
+The initial product roadmap target is **v0**. Concrete software releases within that phase may use normal SemVer tags such as `v0.1.0`, `v0.2.0`, and so on.
+
 User-visible changes should be recorded under `[Unreleased]` in `CHANGELOG.md` as they land.
 
 ## Trigger
 
-Stable publication is triggered from a reviewed version tag matching the repository's release convention, for example `v0.1.0`.
+Stable publication is triggered from a reviewed SemVer tag, for example `v0.1.0`.
 
 A maintainer/agent command may prepare version files, changelog and the tag, but the GitHub Actions release workflow is the publication authority.
 
@@ -49,4 +51,4 @@ Release reruns should be idempotent where registries support it and produce expl
 
 ## Release candidate gate
 
-Issue #63 is the final v0.1 release gate. Any code/config change after a candidate's validation invalidates the affected evidence and requires rerunning the relevant checks.
+Issue #63 is the final v0 roadmap release gate. Any code/config change after a candidate's validation invalidates the affected evidence and requires rerunning the relevant checks.

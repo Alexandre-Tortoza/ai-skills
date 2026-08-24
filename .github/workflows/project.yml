@@ -1,21 +1,21 @@
-name: Bootstrap and sync GitHub Project v2
+name: Bootstrap and sync GitHub Project
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - .github/project/planning.yml
-      - .github/workflows/project-v2.yml
   workflow_dispatch:
 
 permissions:
   contents: read
 
+concurrency:
+  group: github-project-bootstrap
+  cancel-in-progress: false
+
 jobs:
   sync:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     env:
-      GH_TOKEN: ${{ secrets.PROJECTS_TOKEN || secrets.REPOSITORY_ADMIN_TOKEN }}
+      GH_TOKEN: ${{ secrets.PROJECTS_TOKEN }}
     steps:
       - uses: actions/checkout@v7
 
@@ -24,19 +24,19 @@ jobs:
         run: |
           set -euo pipefail
           if [[ -z "${GH_TOKEN:-}" ]]; then
-            echo "::error::Configure PROJECTS_TOKEN or REPOSITORY_ADMIN_TOKEN with GitHub Projects and Issues read/write access."
+            echo "::error::Configure PROJECTS_TOKEN with a classic PAT that has the project scope."
             exit 1
           fi
           gh auth status
           gh project list --owner "$GITHUB_REPOSITORY_OWNER" --limit 1 >/dev/null || {
-            echo "::error::The token cannot access account-level GitHub Projects. A classic PAT needs the project scope; a fine-grained PAT needs Account permissions > Projects: Read and write."
+            echo "::error::PROJECTS_TOKEN cannot access user-owned GitHub Projects. Use a classic PAT with the project scope."
             exit 1
           }
 
       - name: Convert planning YAML to JSON
         run: ruby -ryaml -rjson -e 'puts JSON.generate(YAML.load_file(".github/project/planning.yml"))' > "$RUNNER_TEMP/planning.json"
 
-      - name: Ensure project, repository link and planning fields
+      - name: Ensure Project, repository link and planning fields
         shell: bash
         run: |
           set -euo pipefail
@@ -54,7 +54,7 @@ jobs:
 
           gh project edit "$project_number" --owner "$owner" \
             --visibility "$visibility" \
-            --description "Delivery roadmap for ai-skills. Issue bodies are technical specifications; native relationships and Project fields hold planning metadata."
+            --description "Delivery roadmap for ai-skills v0. Issue bodies are technical specifications; native relationships and Project fields hold planning metadata."
           gh project link "$project_number" --owner "$owner" --repo "$repo_name"
 
           ensure_field() {
@@ -63,10 +63,13 @@ jobs:
               echo "field exists: $name"
               return
             fi
+
             if [[ "$type" == "SINGLE_SELECT" ]]; then
-              gh project field-create "$project_number" --owner "$owner" --name "$name" --data-type "$type" --single-select-options "$options" >/dev/null
+              gh project field-create "$project_number" --owner "$owner" \
+                --name "$name" --data-type "$type" --single-select-options "$options" >/dev/null
             else
-              gh project field-create "$project_number" --owner "$owner" --name "$name" --data-type "$type" >/dev/null
+              gh project field-create "$project_number" --owner "$owner" \
+                --name "$name" --data-type "$type" >/dev/null
             fi
           }
 
@@ -74,27 +77,9 @@ jobs:
           ensure_field "Area" "SINGLE_SELECT" "Core,Library,Storage,Search,MCP,API,CLI,Sync,Agents,LLM,Review,Web,Security,DevOps,Docs"
           ensure_field "Weight" "NUMBER"
           ensure_field "Estimate (days)" "NUMBER"
-          ensure_field "Target release" "SINGLE_SELECT" "v0.1,Post-v0.1"
+          ensure_field "Target release" "SINGLE_SELECT" "v0,Post-v0"
           ensure_field "Start date" "DATE"
           ensure_field "Target date" "DATE"
-
-          fields=$(gh project field-list "$project_number" --owner "$owner" --format json --limit 100)
-          status_id=$(jq -r '.fields[] | select(.name == "Status") | .id' <<<"$fields" | head -n1)
-          status_names=$(jq -r '.fields[] | select(.name == "Status") | [.options[].name] | join("|")' <<<"$fields" | head -n1)
-          desired_statuses='Backlog|Ready|In progress|In review|Blocked|Done'
-          if [[ -n "$status_id" && "$status_names" != "$desired_statuses" ]]; then
-            query='mutation($fieldId: ID!, $options: [ProjectV2SingleSelectFieldOptionInput!]!) { updateProjectV2Field(input: {fieldId: $fieldId, singleSelectOptions: $options}) { projectV2Field { __typename } } }'
-            options='[
-              {"name":"Backlog","color":"GRAY","description":"Not started"},
-              {"name":"Ready","color":"BLUE","description":"Ready to start"},
-              {"name":"In progress","color":"YELLOW","description":"Implementation in progress"},
-              {"name":"In review","color":"PURPLE","description":"Under review or validation"},
-              {"name":"Blocked","color":"RED","description":"Blocked by a dependency or decision"},
-              {"name":"Done","color":"GREEN","description":"Completed"}
-            ]'
-            jq -n --arg query "$query" --arg fieldId "$status_id" --argjson options "$options" \
-              '{query:$query,variables:{fieldId:$fieldId,options:$options}}' | gh api graphql --input - >/dev/null
-          fi
 
           echo "$project_number" > "$RUNNER_TEMP/project_number"
 
@@ -112,7 +97,7 @@ jobs:
             url="https://github.com/$GITHUB_REPOSITORY/issues/$issue"
 
             gh project item-add "$project_number" --owner "$owner" --url "$url" >/dev/null 2>&1 || true
-            gh project item-edit "$project_number" --owner "$owner" --url "$url" --field "Status" --value "Backlog"
+            gh project item-edit "$project_number" --owner "$owner" --url "$url" --field "Status" --value "Todo"
             gh project item-edit "$project_number" --owner "$owner" --url "$url" --field "Priority" --value "$priority"
             gh project item-edit "$project_number" --owner "$owner" --url "$url" --field "Area" --value "$area"
             gh project item-edit "$project_number" --owner "$owner" --url "$url" --field "Weight" --number "$weight"
@@ -132,11 +117,13 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+
           project_number=$(cat "$RUNNER_TEMP/project_number")
           owner="$GITHUB_REPOSITORY_OWNER"
           title=$(ruby -ryaml -e 'puts YAML.load_file(".github/project/planning.yml").fetch("project").fetch("title")')
           expected=$(ruby -ryaml -e 'puts YAML.load_file(".github/project/planning.yml").fetch("issues").size')
           actual=$(gh project item-list "$project_number" --owner "$owner" --format json --limit 500 --jq '.items | length')
+
           if (( actual < expected )); then
             echo "::error::Project contains $actual items; expected at least $expected."
             exit 1
@@ -150,14 +137,15 @@ jobs:
 
           echo "verified Project #$project_number with $actual items and repository link"
 
-      - name: Remove legacy planning labels after successful Project migration
+      - name: Remove legacy planning labels after successful migration
         shell: bash
         run: |
           set -euo pipefail
+
           while IFS= read -r label; do
             [[ -z "$label" ]] && continue
             gh label delete "$label" --repo "$GITHUB_REPOSITORY" --yes
           done < <(gh label list --repo "$GITHUB_REPOSITORY" --limit 200 --json name --jq '.[].name | select(test("^(priority|weight|area|status):"))')
 
           project_number=$(cat "$RUNNER_TEMP/project_number")
-          echo "Project #$project_number is configured and populated."
+          echo "Project #$project_number is configured and populated for v0."

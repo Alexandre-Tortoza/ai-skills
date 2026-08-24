@@ -1,12 +1,12 @@
 # GitHub project model
 
-The canonical delivery board is **ai-skills Roadmap** using GitHub Projects v2.
+The canonical delivery board is the single GitHub Project **ai-skills Roadmap**.
 
 Issue bodies are technical specifications. Planning data belongs to native GitHub fields and relationships instead of being repeated in Markdown.
 
 ## Native hierarchy and dependencies
 
-- Epic #3 is the parent of the v0.1 implementation issues through GitHub sub-issues.
+- Epic #3 is the parent of the v0 implementation issues through GitHub sub-issues.
 - Prerequisites use GitHub `blocked by` / `blocking` relationships.
 - Milestones are assigned through the issue's native Milestone field.
 - The reproducible relationship input is `.github/project/planning.yml`.
@@ -18,12 +18,12 @@ The relationship workflow is additive for dependencies so a maintainer-added rel
 
 | Field | Type | Values / semantics |
 | --- | --- | --- |
-| Status | Built-in | Use the Project's native workflow status and customize its options in the UI when needed |
+| Status | Built-in | Todo, In Progress, Done; refine in the Project UI later if the workflow needs more states |
 | Priority | Single select | P0, P1, P2 |
-| Area | Single select | Core, Library, Storage, Search, MCP, API, CLI, Sync, Agents, LLM, Web, Security, DevOps, Docs |
+| Area | Single select | Core, Library, Storage, Search, MCP, API, CLI, Sync, Agents, LLM, Review, Web, Security, DevOps, Docs |
 | Weight | Number | Fibonacci story points: 1, 2, 3, 5, 8, 13; 21 for Epics or unsliced work |
 | Estimate (days) | Number | Focused implementation-day estimate, separate from story weight |
-| Target release | Single select | v0.1, Post-v0.1 |
+| Target release | Single select | v0, Post-v0 |
 | Start date | Date | Scheduled start when planning becomes concrete |
 | Target date | Date | Scheduled completion when planning becomes concrete |
 | Milestone | Built-in issue field | Delivery phase M0-M8 |
@@ -48,20 +48,20 @@ Do **not** repeat parent, dependencies, priority, area, weight, milestone, relea
 ## Recommended Project views
 
 1. **Roadmap**, grouped by Milestone and Target release.
-2. **Delivery board**, grouped by native Status and filtered to open work.
+2. **Delivery board**, grouped by Status and filtered to open work.
 3. **Architecture**, grouped by Area.
 4. **Critical path**, filtered to Priority = P0.
 5. **Security**, filtered to Area = Security.
-6. **Release v0.1**, filtered to Target release = v0.1.
+6. **Release v0**, filtered to Target release = v0.
 7. **High uncertainty**, filtered to Weight >= 13.
 8. **Timeline**, using Start date / Target date once milestone scheduling is committed.
 
-GitHub currently does not expose every view customization through `gh project`; create/refine the visual views in the Project UI while keeping fields/items reproducible through the workflow.
+GitHub does not expose every view customization through `gh project`; create/refine visual views in the Project UI while keeping fields/items reproducible through the bootstrap workflow.
 
 ## Project bootstrap
 
-`.github/workflows/project-v2.yml` creates/links **ai-skills Roadmap**, creates the planning fields, adds all roadmap issues and writes Priority/Area/Weight/Estimate/Target release from `.github/project/planning.yml`.
+`.github/workflows/project.yml` creates/links the single **ai-skills Roadmap**, creates the planning fields, adds all roadmap issues and writes Status/Priority/Area/Weight/Estimate/Target release from `.github/project/planning.yml`.
 
-GitHub Projects requires a token with the `project` scope. Configure repository secret `PROJECTS_TOKEN` with access to the user's Project plus Issues read/write access, then manually dispatch **Bootstrap and sync GitHub Project v2**.
+Because the Project belongs to the maintainer's personal GitHub account, bootstrap uses a temporary classic PAT stored as repository secret `PROJECTS_TOKEN` with the `project` scope. Run **Bootstrap and sync GitHub Project** once, verify the Project, then remove the token. Fine-grained PATs do not currently support user-owned Projects.
 
-After a successful Project migration, the workflow removes legacy `priority:*`, `area:*`, `weight:*` and `status:*` labels. `.github/labels.yml` intentionally retains only issue classification labels so planning has one source in Projects rather than two competing representations.
+After a successful Project migration, the workflow removes legacy `priority:*`, `area:*`, `weight:*` and `status:*` labels. `.github/labels.yml` intentionally retains only issue classification labels so planning has one source in the Project rather than competing representations.
