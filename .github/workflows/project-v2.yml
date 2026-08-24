@@ -1,0 +1,28 @@
+name: Bootstrap GitHub Project v2
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  bootstrap:
+    runs-on: ubuntu-latest
+    if: ${{ secrets.PROJECTS_TOKEN != '' }}
+    env:
+      GH_TOKEN: ${{ secrets.PROJECTS_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Ensure project exists
+        shell: bash
+        run: |
+          set -euo pipefail
+          owner="${GITHUB_REPOSITORY_OWNER}"
+          title="ai-skills Roadmap"
+          if gh project list --owner "$owner" --format json --limit 100 | jq -e --arg title "$title" '.projects[] | select(.title == $title)' >/dev/null; then
+            echo "Project already exists: $title"
+          else
+            gh project create --owner "$owner" --title "$title"
+          fi
+          echo "Configure repository linkage and fields Status, Priority, Area, Effort, Milestone and Target release in the project UI or extend this workflow with a PAT authorized for Projects v2."

@@ -1,0 +1,71 @@
+name: Feature Request
+description: Propose a new user-facing feature or enhancement for ai-skills
+title: "[Feature]: "
+labels: ["type:feature", "status:triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Describe the capability, its user value, and enough technical context for implementation and review.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What problem, limitation, or workflow gap does this solve?
+      placeholder: Describe the current behavior and why it is insufficient.
+    validations:
+      required: true
+  - type: textarea
+    id: user-story
+    attributes:
+      label: User story
+      value: |
+        **As a** [user or agent]
+        **I want to** [capability]
+        **So that** [outcome/value]
+    validations:
+      required: true
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed solution
+      description: Describe expected behavior, interfaces, data flow, and relevant alternatives.
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      value: |
+        - [ ] Behavior is covered by automated tests.
+        - [ ] User-facing behavior is documented.
+        - [ ] Failure modes return actionable errors.
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Primary area
+      options:
+        - Core / Domain
+        - Skill Library / Storage
+        - Search / Embeddings
+        - MCP / API
+        - CLI / Sync
+        - Agent Adapters
+        - LLM / Review
+        - Web Dashboard
+        - Security / Trust
+        - DevOps / Release
+    validations:
+      required: true
+  - type: textarea
+    id: dependencies
+    attributes:
+      label: Dependencies and references
+      description: Link related issues, ADRs, specifications, repositories, or upstream documentation.
+  - type: textarea
+    id: risks
+    attributes:
+      label: Risks and security considerations
+      description: Note prompt-injection, supply-chain, permissions, data-loss, compatibility, or migration risks.

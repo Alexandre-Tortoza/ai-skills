@@ -1,0 +1,45 @@
+name: Technical Task
+description: Track architecture, refactoring, infrastructure, testing, or internal engineering work
+title: "[Task]: "
+labels: ["type:task", "status:triage"]
+body:
+  - type: textarea
+    id: objective
+    attributes:
+      label: Objective
+      description: State the concrete engineering outcome.
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Technical context
+      description: Explain architecture, constraints, interfaces, and why this work is needed.
+    validations:
+      required: true
+  - type: textarea
+    id: implementation
+    attributes:
+      label: Implementation notes
+      description: Proposed components, modules, APIs, migrations, or algorithms. This is guidance, not a rigid prescription.
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Definition of done
+      value: |
+        - [ ] Implementation is complete and reviewed.
+        - [ ] Automated tests cover the critical behavior.
+        - [ ] Documentation or ADRs are updated where applicable.
+        - [ ] No unresolved security or migration risk remains.
+    validations:
+      required: true
+  - type: textarea
+    id: dependencies
+    attributes:
+      label: Dependencies
+      placeholder: "Blocked by #...; blocks #..."
+  - type: input
+    id: effort
+    attributes:
+      label: Initial effort estimate
+      placeholder: XS / S / M / L / XL

@@ -1,0 +1,54 @@
+name: Repository governance
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/labels.yml
+      - .github/milestones.yml
+      - .github/workflows/governance.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const yaml = require('js-yaml');
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+
+            const labels = yaml.load(fs.readFileSync('.github/labels.yml', 'utf8')).labels;
+            const existingLabels = await github.paginate(github.rest.issues.listLabelsForRepo, { owner, repo, per_page: 100 });
+            const byName = new Map(existingLabels.map(label => [label.name, label]));
+            for (const label of labels) {
+              if (byName.has(label.name)) {
+                await github.rest.issues.updateLabel({ owner, repo, name: label.name, new_name: label.name, color: label.color, description: label.description });
+                console.log(`updated label ${label.name}`);
+              } else {
+                await github.rest.issues.createLabel({ owner, repo, name: label.name, color: label.color, description: label.description });
+                console.log(`created label ${label.name}`);
+              }
+            }
+
+            const milestones = yaml.load(fs.readFileSync('.github/milestones.yml', 'utf8')).milestones;
+            const existingMilestones = await github.paginate(github.rest.issues.listMilestones, { owner, repo, state: 'all', per_page: 100 });
+            const milestoneByTitle = new Map(existingMilestones.map(m => [m.title, m]));
+            for (const milestone of milestones) {
+              const existing = milestoneByTitle.get(milestone.title);
+              if (existing) {
+                await github.rest.issues.updateMilestone({ owner, repo, milestone_number: existing.number, title: milestone.title, description: milestone.description, state: 'open' });
+                console.log(`milestone ${existing.number}: ${milestone.title}`);
+              } else {
+                const created = await github.rest.issues.createMilestone({ owner, repo, title: milestone.title, description: milestone.description });
+                console.log(`milestone ${created.data.number}: ${milestone.title}`);
+              }
+            }

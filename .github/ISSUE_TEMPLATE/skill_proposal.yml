@@ -1,0 +1,49 @@
+name: Skill / Knowledge Proposal
+description: Propose a new canonical skill, knowledge page, source integration, or substantial skill evolution
+title: "[Skill]: "
+labels: ["type:skill", "status:triage"]
+body:
+  - type: input
+    id: skill-name
+    attributes:
+      label: Skill name
+      placeholder: rust-best-practices
+    validations:
+      required: true
+  - type: textarea
+    id: purpose
+    attributes:
+      label: Purpose and activation context
+      description: Explain when an agent should discover or activate this skill.
+    validations:
+      required: true
+  - type: dropdown
+    id: origin
+    attributes:
+      label: Origin
+      options:
+        - First-party / user-authored
+        - Organization-owned
+        - Third-party Git/GitHub source
+        - LLM-proposed evolution
+    validations:
+      required: true
+  - type: textarea
+    id: source
+    attributes:
+      label: Source and provenance
+      description: Link the upstream repository/revision or evidence supporting the change.
+  - type: textarea
+    id: content
+    attributes:
+      label: Proposed content or behavior
+      description: Provide the intended SKILL.md structure or describe the requested evolution.
+    validations:
+      required: true
+  - type: textarea
+    id: safety
+    attributes:
+      label: Trust and safety considerations
+      description: Explain source trust, prompt-injection exposure, required approval, and update strategy.
+    validations:
+      required: true
