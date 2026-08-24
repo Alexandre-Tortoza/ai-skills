@@ -32,8 +32,32 @@ jobs:
           repo="$GITHUB_REPOSITORY"
           epic=$(jq -r '.project.epic' "$plan")
 
-          # Parent/sub-issue hierarchy. Use the REST API so repeated runs are
-          # idempotent and do not depend on prose references in issue bodies.
+          # GitHub recommends serializing mutating API requests to avoid
+          # secondary rate limiting. This helper also makes a partially applied
+          # planning migration self-healing on the next run.
+          api_post() {
+            local endpoint="$1"
+            shift
+
+            for attempt in 1 2 3 4 5; do
+              if gh api --method POST \
+                -H "X-GitHub-Api-Version: 2026-03-10" \
+                "$endpoint" "$@" >/dev/null; then
+                sleep 1.25
+                return 0
+              fi
+
+              delay=$((attempt * 15))
+              echo "mutation failed (attempt $attempt/5); retrying in ${delay}s: $endpoint" >&2
+              sleep "$delay"
+            done
+
+            echo "mutation failed after retries: $endpoint" >&2
+            return 1
+          }
+
+          # Parent/sub-issue hierarchy. Read first, then add only missing
+          # relationships. Existing successful work from a previous run is kept.
           existing_children=$(gh api \
             -H "X-GitHub-Api-Version: 2026-03-10" \
             "repos/$repo/issues/$epic/sub_issues?per_page=100" \
@@ -44,18 +68,16 @@ jobs:
             if grep -qx "$issue" <<<"$existing_children"; then
               continue
             fi
+
             issue_id=$(gh api "repos/$repo/issues/$issue" --jq '.id')
-            gh api --method POST \
-              -H "X-GitHub-Api-Version: 2026-03-10" \
-              "repos/$repo/issues/$epic/sub_issues" \
+            api_post "repos/$repo/issues/$epic/sub_issues" \
               -F sub_issue_id="$issue_id" \
-              -F replace_parent=true >/dev/null
+              -F replace_parent=true
             echo "added #$issue as sub-issue of #$epic"
-            sleep 0.25
           done < <(jq -r '.issues | keys[]' "$plan" | sort -n)
 
           # Dependencies are additive: manual relationships are preserved. The
-          # manifest guarantees that declared dependencies exist natively.
+          # manifest guarantees that every declared prerequisite exists natively.
           while IFS='|' read -r issue deps; do
             [[ -z "$issue" || -z "$deps" ]] && continue
 
@@ -70,13 +92,11 @@ jobs:
               if grep -qx "$blocker" <<<"$existing"; then
                 continue
               fi
+
               blocker_id=$(gh api "repos/$repo/issues/$blocker" --jq '.id')
-              gh api --method POST \
-                -H "X-GitHub-Api-Version: 2026-03-10" \
-                "repos/$repo/issues/$issue/dependencies/blocked_by" \
-                -F issue_id="$blocker_id" >/dev/null
+              api_post "repos/$repo/issues/$issue/dependencies/blocked_by" \
+                -F issue_id="$blocker_id"
               echo "#${issue} blocked by #${blocker}"
-              sleep 0.25
             done
           done < <(ruby -ryaml -e '
             p = YAML.load_file(".github/project/planning.yml")
