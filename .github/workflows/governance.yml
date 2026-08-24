@@ -16,39 +16,90 @@ permissions:
 jobs:
   sync:
     runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/github-script@v7
+
+      - name: Convert governance YAML to JSON
+        shell: bash
+        run: |
+          set -euo pipefail
+          ruby -ryaml -rjson -e 'puts JSON.generate(YAML.load_file(".github/labels.yml"))' > "$RUNNER_TEMP/labels.json"
+          ruby -ryaml -rjson -e 'puts JSON.generate(YAML.load_file(".github/milestones.yml"))' > "$RUNNER_TEMP/milestones.json"
+
+      - name: Synchronize labels and milestones
+        uses: actions/github-script@v7
+        env:
+          LABELS_JSON: ${{ runner.temp }}/labels.json
+          MILESTONES_JSON: ${{ runner.temp }}/milestones.json
         with:
           script: |
             const fs = require('fs');
-            const yaml = require('js-yaml');
             const owner = context.repo.owner;
             const repo = context.repo.repo;
 
-            const labels = yaml.load(fs.readFileSync('.github/labels.yml', 'utf8')).labels;
-            const existingLabels = await github.paginate(github.rest.issues.listLabelsForRepo, { owner, repo, per_page: 100 });
-            const byName = new Map(existingLabels.map(label => [label.name, label]));
+            const labelConfig = JSON.parse(fs.readFileSync(process.env.LABELS_JSON, 'utf8'));
+            const labels = labelConfig.labels ?? [];
+            const existingLabels = await github.paginate(github.rest.issues.listLabelsForRepo, {
+              owner,
+              repo,
+              per_page: 100,
+            });
+            const labelsByName = new Map(existingLabels.map(label => [label.name, label]));
+
             for (const label of labels) {
-              if (byName.has(label.name)) {
-                await github.rest.issues.updateLabel({ owner, repo, name: label.name, new_name: label.name, color: label.color, description: label.description });
-                console.log(`updated label ${label.name}`);
+              if (labelsByName.has(label.name)) {
+                await github.rest.issues.updateLabel({
+                  owner,
+                  repo,
+                  name: label.name,
+                  new_name: label.name,
+                  color: String(label.color).replace('#', ''),
+                  description: label.description ?? '',
+                });
+                core.info(`updated label: ${label.name}`);
               } else {
-                await github.rest.issues.createLabel({ owner, repo, name: label.name, color: label.color, description: label.description });
-                console.log(`created label ${label.name}`);
+                await github.rest.issues.createLabel({
+                  owner,
+                  repo,
+                  name: label.name,
+                  color: String(label.color).replace('#', ''),
+                  description: label.description ?? '',
+                });
+                core.info(`created label: ${label.name}`);
               }
             }
 
-            const milestones = yaml.load(fs.readFileSync('.github/milestones.yml', 'utf8')).milestones;
-            const existingMilestones = await github.paginate(github.rest.issues.listMilestones, { owner, repo, state: 'all', per_page: 100 });
-            const milestoneByTitle = new Map(existingMilestones.map(m => [m.title, m]));
+            const milestoneConfig = JSON.parse(fs.readFileSync(process.env.MILESTONES_JSON, 'utf8'));
+            const milestones = milestoneConfig.milestones ?? [];
+            const existingMilestones = await github.paginate(github.rest.issues.listMilestones, {
+              owner,
+              repo,
+              state: 'all',
+              per_page: 100,
+            });
+            const milestonesByTitle = new Map(existingMilestones.map(milestone => [milestone.title, milestone]));
+
             for (const milestone of milestones) {
-              const existing = milestoneByTitle.get(milestone.title);
+              const existing = milestonesByTitle.get(milestone.title);
               if (existing) {
-                await github.rest.issues.updateMilestone({ owner, repo, milestone_number: existing.number, title: milestone.title, description: milestone.description, state: 'open' });
-                console.log(`milestone ${existing.number}: ${milestone.title}`);
+                await github.rest.issues.updateMilestone({
+                  owner,
+                  repo,
+                  milestone_number: existing.number,
+                  title: milestone.title,
+                  description: milestone.description ?? '',
+                  state: 'open',
+                });
+                core.info(`updated milestone #${existing.number}: ${milestone.title}`);
               } else {
-                const created = await github.rest.issues.createMilestone({ owner, repo, title: milestone.title, description: milestone.description });
-                console.log(`milestone ${created.data.number}: ${milestone.title}`);
+                const created = await github.rest.issues.createMilestone({
+                  owner,
+                  repo,
+                  title: milestone.title,
+                  description: milestone.description ?? '',
+                });
+                core.info(`created milestone #${created.data.number}: ${milestone.title}`);
               }
             }
