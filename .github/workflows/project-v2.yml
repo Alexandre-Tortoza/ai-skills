@@ -6,18 +6,19 @@ on:
     paths:
       - .github/project/planning.yml
       - .github/workflows/project-v2.yml
-  pull_request:
-    branches: [dev]
-    paths:
-      - .github/workflows/project-v2.yml
   workflow_dispatch:
 
 permissions:
   contents: read
 
+concurrency:
+  group: project-v2-sync
+  cancel-in-progress: false
+
 jobs:
   sync:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     env:
       GH_TOKEN: ${{ secrets.PROJECTS_TOKEN || secrets.REPOSITORY_ADMIN_TOKEN }}
     steps:
