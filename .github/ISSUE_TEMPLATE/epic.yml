@@ -1,8 +1,13 @@
 name: Epic
 description: Define a multi-milestone product or architectural outcome that will be decomposed into executable issues
 title: "[Epic]: "
-labels: ["type:epic", "priority:P0", "weight:21"]
+labels: ["type:epic"]
 body:
+  - type: markdown
+    attributes:
+      value: |
+        Epics describe outcomes and architecture. Child issues, dependencies, priority, Fibonacci weight, delivery status and scheduling belong in GitHub native relationships/Projects.
+
   - type: textarea
     id: outcome
     attributes:
@@ -10,12 +15,14 @@ body:
       description: State the product/engineering outcome and how success is measured.
     validations:
       required: true
+
   - type: textarea
     id: problem
     attributes:
       label: Problem and strategic context
     validations:
       required: true
+
   - type: textarea
     id: architecture
     attributes:
@@ -23,39 +30,34 @@ body:
       description: Summarize major boundaries, flows, invariants and design decisions. Use Mermaid when it improves clarity.
     validations:
       required: true
+
   - type: textarea
     id: workstreams
     attributes:
-      label: Workstreams / child issues
-      value: |
-        - [ ] Foundation
-        - [ ] Core capabilities
-        - [ ] Security/reliability
-        - [ ] Distribution/release
+      label: Workstreams
+      description: Describe the major streams that should become native child issues.
     validations:
       required: true
+
   - type: textarea
     id: milestones
     attributes:
       label: Milestones and exit criteria
+      description: Describe phase outcomes. Assign the actual milestones through GitHub's milestone field.
     validations:
       required: true
-  - type: textarea
-    id: dependencies
-    attributes:
-      label: Critical path and dependencies
-    validations:
-      required: true
+
   - type: textarea
     id: risks
     attributes:
       label: Major risks and mitigations
     validations:
       required: true
+
   - type: textarea
     id: metrics
     attributes:
       label: Success metrics
-      description: Include functional, quality, performance, security, adoption, and release-readiness metrics where relevant.
+      description: Include functional, quality, performance, security, adoption and release-readiness metrics where relevant.
     validations:
       required: true

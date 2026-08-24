@@ -1,8 +1,13 @@
 name: Technical Task
-description: Track architecture, refactoring, infrastructure, testing, or internal engineering work
+description: Track architecture, refactoring, infrastructure, testing or internal engineering work
 title: "[Task]: "
-labels: ["type:task", "status:triage"]
+labels: ["type:task"]
 body:
+  - type: markdown
+    attributes:
+      value: |
+        Keep this form focused on engineering specification. Priority, Fibonacci weight, area, release, dates and dependencies are represented through GitHub Projects and native issue relationships.
+
   - type: textarea
     id: objective
     attributes:
@@ -10,20 +15,23 @@ body:
       description: State the concrete engineering result and why it matters.
     validations:
       required: true
+
   - type: textarea
     id: context
     attributes:
       label: Technical context
-      description: Explain current architecture, constraints, interfaces, invariants, and evidence motivating the work.
+      description: Explain current architecture, constraints, interfaces, invariants and evidence motivating the work.
     validations:
       required: true
+
   - type: textarea
     id: implementation
     attributes:
       label: Implementation notes
-      description: Proposed components, modules, APIs, migrations, algorithms, or sequencing. Guidance rather than a rigid prescription.
+      description: Proposed components, modules, APIs, migrations, algorithms or sequencing. Guidance rather than a rigid prescription.
     validations:
       required: true
+
   - type: textarea
     id: deliverables
     attributes:
@@ -35,6 +43,7 @@ body:
         - [ ] Migration or compatibility notes where applicable
     validations:
       required: true
+
   - type: textarea
     id: acceptance
     attributes:
@@ -47,41 +56,25 @@ body:
         - [ ] No unresolved migration or backwards-compatibility risk remains.
     validations:
       required: true
-  - type: dropdown
-    id: priority
-    attributes:
-      label: Priority
-      options: [P0, P1, P2]
-    validations:
-      required: true
-  - type: dropdown
-    id: weight
-    attributes:
-      label: Fibonacci story weight
-      options: ["1", "2", "3", "5", "8", "13", "21"]
-    validations:
-      required: true
-  - type: input
-    id: estimate
-    attributes:
-      label: Estimated implementation time
-      placeholder: e.g. 4 hours, 1-2 days, 1 week
-    validations:
-      required: true
-  - type: textarea
-    id: dependencies
-    attributes:
-      label: Dependencies and critical path
-      placeholder: "Blocked by #...; blocks #..."
+
   - type: textarea
     id: validation
     attributes:
       label: Validation and test strategy
-      description: State how reviewers can prove the task is correct, including benchmarks or security tests when relevant.
+      description: State how reviewers can prove the task is correct, including benchmarks/evals/security tests when relevant.
     validations:
       required: true
+
   - type: textarea
     id: risks
     attributes:
       label: Risks / rollback
-      description: Identify operational, security, data, migration, performance, and rollback considerations.
+      description: Identify operational, security, data, migration, performance and rollback considerations.
+    validations:
+      required: true
+
+  - type: textarea
+    id: docs
+    attributes:
+      label: Documentation impact
+      description: Identify docs, ADRs, runbooks, migration notes or examples that must change.

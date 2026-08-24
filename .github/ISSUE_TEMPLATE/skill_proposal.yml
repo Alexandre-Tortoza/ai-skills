@@ -1,8 +1,13 @@
 name: Skill / Knowledge Proposal
-description: Propose a canonical skill, knowledge page, source integration, or substantial skill evolution
+description: Propose a canonical skill, knowledge page, source integration or substantial skill evolution
 title: "[Skill]: "
-labels: ["type:skill", "status:triage"]
+labels: ["type:skill"]
 body:
+  - type: markdown
+    attributes:
+      value: |
+        Skill proposals must preserve provenance and trust boundaries. Planning metadata is maintained in GitHub Projects and native issue relationships.
+
   - type: input
     id: skill-name
     attributes:
@@ -10,6 +15,7 @@ body:
       placeholder: rust-best-practices
     validations:
       required: true
+
   - type: textarea
     id: purpose
     attributes:
@@ -17,6 +23,7 @@ body:
       description: Explain who benefits, when an agent should discover/activate the skill, and why it belongs in durable knowledge.
     validations:
       required: true
+
   - type: dropdown
     id: origin
     attributes:
@@ -28,20 +35,23 @@ body:
         - LLM-proposed evolution
     validations:
       required: true
+
   - type: textarea
     id: source
     attributes:
       label: Source, revision and provenance
-      description: Link upstream repository, commit/tag, license, or evidence supporting the change.
+      description: Link upstream repository, commit/tag, license or evidence supporting the change.
     validations:
       required: true
+
   - type: textarea
     id: behavior
     attributes:
       label: Intended behavior / content
-      description: Describe SKILL.md structure, supporting references/scripts/assets, discovery metadata, and expected agent behavior.
+      description: Describe SKILL.md structure, supporting references/scripts/assets, discovery metadata and expected agent behavior.
     validations:
       required: true
+
   - type: textarea
     id: acceptance
     attributes:
@@ -50,31 +60,11 @@ body:
         - [ ] Skill validates against the supported Agent Skills format.
         - [ ] Name/description enable accurate progressive disclosure.
         - [ ] Provenance and revision are recorded.
-        - [ ] Discovery behavior is tested.
+        - [ ] Discovery behavior is tested/evaluated.
         - [ ] Activation does not silently exceed configured context budget.
     validations:
       required: true
-  - type: dropdown
-    id: priority
-    attributes:
-      label: Priority
-      options: [P0, P1, P2]
-    validations:
-      required: true
-  - type: dropdown
-    id: weight
-    attributes:
-      label: Fibonacci story weight
-      options: ["1", "2", "3", "5", "8", "13", "21"]
-    validations:
-      required: true
-  - type: input
-    id: estimate
-    attributes:
-      label: Estimated implementation time
-      placeholder: e.g. 1 day, 2-3 days
-    validations:
-      required: true
+
   - type: textarea
     id: safety
     attributes:
@@ -82,10 +72,11 @@ body:
       description: Explain prompt-injection exposure, source trust, permissions, approval requirements, overlays, upstream updates and conflict strategy.
     validations:
       required: true
+
   - type: textarea
     id: evidence
     attributes:
       label: Evaluation / evidence
-      description: Explain how the skill's usefulness and correctness should be tested or evaluated.
+      description: Explain how usefulness and correctness should be tested or evaluated.
     validations:
       required: true
