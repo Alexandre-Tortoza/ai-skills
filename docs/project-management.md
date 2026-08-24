@@ -18,7 +18,7 @@ The relationship workflow is additive for dependencies so a maintainer-added rel
 
 | Field | Type | Values / semantics |
 | --- | --- | --- |
-| Status | Built-in | Backlog, Ready, In progress, In review, Blocked, Done |
+| Status | Built-in | Todo, In Progress, Done; refine in the Project UI later if the workflow needs more states |
 | Priority | Single select | P0, P1, P2 |
 | Area | Single select | Core, Library, Storage, Search, MCP, API, CLI, Sync, Agents, LLM, Review, Web, Security, DevOps, Docs |
 | Weight | Number | Fibonacci story points: 1, 2, 3, 5, 8, 13; 21 for Epics or unsliced work |
