@@ -6,6 +6,10 @@ on:
     paths:
       - .github/project/planning.yml
       - .github/workflows/project-v2.yml
+  pull_request:
+    branches: [dev]
+    paths:
+      - .github/workflows/project-v2.yml
   workflow_dispatch:
 
 permissions:
