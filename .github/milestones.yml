@@ -15,5 +15,5 @@ milestones:
     description: "Vue management UI for library CRUD, discovery, profiles, repositories, proposals and statistics. Target: 2 weeks."
   - title: "M7 - Security, Reliability & Observability"
     description: "Threat model, authz, prompt-injection boundaries, concurrency, backups, audit, metrics and failure recovery. Target: 2 weeks."
-  - title: "M8 - v0.1 Distribution & Release"
+  - title: "M8 - v0 Distribution & Release"
     description: "Packaging, installers, CI/CD, SBOM/provenance, release automation, documentation and compatibility validation. Target: 1-2 weeks."
