@@ -6,13 +6,12 @@ body:
   - type: markdown
     attributes:
       value: |
-        Describe the capability, its user value, and enough technical context for implementation and review.
+        Describe the capability, user value, architecture impact, and measurable completion criteria. Prefer an issue that can be completed independently and reviewed in one pull request or a small PR series.
   - type: textarea
     id: problem
     attributes:
-      label: Problem
-      description: What problem, limitation, or workflow gap does this solve?
-      placeholder: Describe the current behavior and why it is insufficient.
+      label: Problem / opportunity
+      description: What problem, limitation, or workflow gap does this solve? Include concrete examples where useful.
     validations:
       required: true
   - type: textarea
@@ -22,14 +21,26 @@ body:
       value: |
         **As a** [user or agent]
         **I want to** [capability]
-        **So that** [outcome/value]
+        **So that** [measurable outcome/value]
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope
+      value: |
+        **In scope**
+        - 
+
+        **Out of scope**
+        - 
     validations:
       required: true
   - type: textarea
     id: solution
     attributes:
-      label: Proposed solution
-      description: Describe expected behavior, interfaces, data flow, and relevant alternatives.
+      label: Proposed solution / technical direction
+      description: Describe expected behavior, interfaces, data flow, persistence, compatibility requirements, and relevant alternatives.
     validations:
       required: true
   - type: textarea
@@ -37,9 +48,33 @@ body:
     attributes:
       label: Acceptance criteria
       value: |
-        - [ ] Behavior is covered by automated tests.
-        - [ ] User-facing behavior is documented.
+        - [ ] Functional behavior is implemented end-to-end.
+        - [ ] Critical behavior is covered by automated tests.
         - [ ] Failure modes return actionable errors.
+        - [ ] User-facing configuration/API behavior is documented.
+        - [ ] Observability is added where operationally relevant.
+    validations:
+      required: true
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Proposed priority
+      options: [P0, P1, P2]
+    validations:
+      required: true
+  - type: dropdown
+    id: weight
+    attributes:
+      label: Fibonacci story weight
+      description: Relative complexity/risk/uncertainty, not elapsed time. Items at 13 should be reviewed for decomposition; 21 belongs to Epics.
+      options: ["1", "2", "3", "5", "8", "13", "21"]
+    validations:
+      required: true
+  - type: input
+    id: estimate
+    attributes:
+      label: Estimated implementation time
+      placeholder: e.g. 1 day, 2-3 days, 1 week
     validations:
       required: true
   - type: dropdown
@@ -62,10 +97,24 @@ body:
   - type: textarea
     id: dependencies
     attributes:
-      label: Dependencies and references
-      description: Link related issues, ADRs, specifications, repositories, or upstream documentation.
+      label: Dependencies, blockers and references
+      description: Link prerequisite/issues blocked by this item, ADRs, specifications, repositories, or upstream docs.
+  - type: textarea
+    id: tests
+    attributes:
+      label: Test strategy
+      description: Unit, integration, contract, E2E, security, performance, compatibility, or migration tests expected.
+    validations:
+      required: true
   - type: textarea
     id: risks
     attributes:
       label: Risks and security considerations
-      description: Note prompt-injection, supply-chain, permissions, data-loss, compatibility, or migration risks.
+      description: Note prompt injection, supply chain, permissions, data loss, concurrency, compatibility, migration, performance, or privacy risks.
+    validations:
+      required: true
+  - type: textarea
+    id: docs
+    attributes:
+      label: Documentation impact
+      description: Identify README, user guide, MCP/tool docs, ADRs, migration notes, or examples that should change.
