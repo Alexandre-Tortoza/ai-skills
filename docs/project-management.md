@@ -1,67 +1,81 @@
-# GitHub project model
+# GitHub planning model
 
-The canonical delivery board is the single GitHub Project **ai-skills Roadmap**.
+`ai-skills` intentionally does **not** use GitHub Projects. The repository planning model is built from GitHub Issues, Milestones, labels, sub-issues and native dependency relationships.
 
-Issue bodies are technical specifications. Planning data belongs to native GitHub fields and relationships instead of being repeated in Markdown.
+Issue bodies remain technical specifications. Planning metadata is kept out of prose when GitHub already has a structured representation for it.
+
+## Sources of truth
+
+| Concern | Source of truth |
+| --- | --- |
+| Epic hierarchy | GitHub parent/sub-issue relationships |
+| Dependencies | GitHub `blocked by` / `blocking` relationships |
+| Delivery phase | GitHub Milestone |
+| Priority | `priority:P0/P1/P2` label |
+| Technical area | `area:*` label |
+| Relative effort | Fibonacci `weight:*` label |
+| Triage / visible blocking state | `status:triage` / `status:blocked` labels |
+| Focused engineering-day estimate | `.github/project/planning.yml` |
+| Detailed requirements and acceptance criteria | Issue body |
+| Reproducible planning metadata | `.github/project/planning.yml` |
+
+The GitHub Project feature is not required by the repository and no Project token or Project bootstrap workflow is used.
 
 ## Native hierarchy and dependencies
 
-- Epic #3 is the parent of the v0 implementation issues through GitHub sub-issues.
+- Epic #3 is the parent of the v0 implementation backlog through GitHub sub-issues.
+- Nested work may use another managed issue as parent, for example distribution work under #64.
 - Prerequisites use GitHub `blocked by` / `blocking` relationships.
-- Milestones are assigned through the issue's native Milestone field.
-- The reproducible relationship input is `.github/project/planning.yml`.
-- `.github/workflows/planning-sync.yml` materializes declared parent/dependency relationships using the GitHub Issues API.
+- Milestones group work into delivery phases M0-M8.
+- `.github/workflows/planning-sync.yml` materializes the relationships declared in `.github/project/planning.yml`.
 
-The relationship workflow is additive for dependencies so a maintainer-added relationship is not silently removed. Parent assignment is authoritative for managed roadmap issues.
+Dependency synchronization is additive: manually added dependencies are not silently removed. Parent assignment is authoritative for issues managed by the planning manifest.
 
-## Project fields
+## Labels
 
-| Field | Type | Values / semantics |
-| --- | --- | --- |
-| Status | Built-in | Todo, In Progress, Done; refine in the Project UI later if the workflow needs more states |
-| Priority | Single select | P0, P1, P2 |
-| Area | Single select | Core, Library, Storage, Search, MCP, API, CLI, Sync, Agents, LLM, Review, Web, Security, DevOps, Docs |
-| Weight | Number | Fibonacci story points: 1, 2, 3, 5, 8, 13; 21 for Epics or unsliced work |
-| Estimate (days) | Number | Focused implementation-day estimate, separate from story weight |
-| Target release | Single select | v0, Post-v0 |
-| Start date | Date | Scheduled start when planning becomes concrete |
-| Target date | Date | Scheduled completion when planning becomes concrete |
-| Milestone | Built-in issue field | Delivery phase M0-M8 |
+Planning labels are deliberately small and composable:
 
-**Weight is not elapsed time.** It represents relative complexity, uncertainty, integration surface and delivery risk. Executable issues should normally stay at 8 points or below; 13 requires decomposition review; 21 is reserved for Epics or intentionally unsliced discovery work.
+- `priority:P0`, `priority:P1`, `priority:P2`;
+- `area:core`, `area:library`, `area:storage`, `area:search`, `area:mcp`, `area:api`, `area:cli`, `area:sync`, `area:agents`, `area:llm`, `area:review`, `area:web`, `area:security`, `area:devops`, `area:docs`;
+- Fibonacci weights `weight:1`, `weight:2`, `weight:3`, `weight:5`, `weight:8`, `weight:13`, `weight:21`;
+- `status:triage` and `status:blocked` only when useful.
+
+**Weight is not elapsed time.** It captures relative complexity, uncertainty, integration surface and delivery risk. Executable work should normally remain at 8 points or below; 13 should trigger decomposition review; 21 is reserved for Epics or intentionally unsliced work.
+
+The focused `estimate_days` value remains in the planning manifest because GitHub Issues do not provide a native numeric estimate field without introducing GitHub Projects. Story weight and time estimate intentionally remain separate concepts.
+
+## Automation
+
+Two permanent workflows maintain the planning model:
+
+1. `.github/workflows/governance.yml` creates and updates the canonical label taxonomy and milestones from `.github/labels.yml` and `.github/milestones.yml`.
+2. `.github/workflows/planning-sync.yml` synchronizes parent/sub-issue relationships, dependencies, priority, area and Fibonacci weight from `.github/project/planning.yml`.
+
+The workflows use the repository-scoped `GITHUB_TOKEN`; no personal access token is required.
 
 ## Issue anatomy
 
-Implementation issue bodies should contain only information needed to understand and verify the engineering work:
+Implementation issues should contain only the information needed to understand and verify the engineering work:
 
 - problem/context and measurable objective;
 - in-scope/out-of-scope boundaries where useful;
-- architecture/implementation guidance;
+- architecture or implementation guidance;
 - deliverables;
 - acceptance criteria / Definition of Done;
 - test/evaluation strategy;
 - security, operational and rollback risks;
 - documentation impact and external references.
 
-Do **not** repeat parent, dependencies, priority, area, weight, milestone, release or scheduling metadata in issue prose once the native fields/relationships exist.
+Do not duplicate parent relationships, dependency relationships, milestone, priority, area or weight in the Markdown body.
 
-## Recommended Project views
+## Working with the backlog
 
-1. **Roadmap**, grouped by Milestone and Target release.
-2. **Delivery board**, grouped by Status and filtered to open work.
-3. **Architecture**, grouped by Area.
-4. **Critical path**, filtered to Priority = P0.
-5. **Security**, filtered to Area = Security.
-6. **Release v0**, filtered to Target release = v0.
-7. **High uncertainty**, filtered to Weight >= 13.
-8. **Timeline**, using Start date / Target date once milestone scheduling is committed.
+Useful GitHub filters include:
 
-GitHub does not expose every view customization through `gh project`; create/refine visual views in the Project UI while keeping fields/items reproducible through the bootstrap workflow.
+- critical path: `is:issue is:open label:priority:P0`;
+- security work: `is:issue is:open label:area:security`;
+- high uncertainty: `is:issue is:open label:weight:13` or `label:weight:21`;
+- blocked items: `is:issue is:open label:status:blocked`;
+- milestone-specific work through the native Milestone selector.
 
-## Project bootstrap
-
-`.github/workflows/project.yml` creates/links the single **ai-skills Roadmap**, creates the planning fields, adds all roadmap issues and writes Status/Priority/Area/Weight/Estimate/Target release from `.github/project/planning.yml`.
-
-Because the Project belongs to the maintainer's personal GitHub account, bootstrap uses a temporary classic PAT stored as repository secret `PROJECTS_TOKEN` with the `project` scope. Run **Bootstrap and sync GitHub Project** once, verify the Project, then remove the token. Fine-grained PATs do not currently support user-owned Projects.
-
-After a successful Project migration, the workflow removes legacy `priority:*`, `area:*`, `weight:*` and `status:*` labels. `.github/labels.yml` intentionally retains only issue classification labels so planning has one source in the Project rather than competing representations.
+This keeps the entire planning system repository-native, searchable, automatable and usable by contributors without requiring a separate board or account-level Project permissions.
