@@ -4,8 +4,8 @@ This directory contains the detailed engineering and operational documentation f
 
 ## Start here
 
-- [Open-source readiness](open-source-readiness.md), minimum bar before v0.1 is presented as ready.
-- [Project management](project-management.md), native GitHub Issues, relationships, milestones and Projects v2 model.
+- [Open-source readiness](open-source-readiness.md), minimum bar before v0 is presented as ready.
+- [Project management](project-management.md), native GitHub Issues, relationships, milestones and the single `ai-skills Roadmap` Project.
 - [Branching and promotion](branching-strategy.md), `dev -> qa -> main` workflow and native protection policy.
 - [Release policy](releasing.md), tag-driven releases and build-once/repackage-many rules.
 - [Security policy](../SECURITY.md), current trust and mutation invariants.
