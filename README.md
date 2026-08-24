@@ -68,7 +68,7 @@ The v0 release must provide a low-friction installation surface and verified pre
 
 The product Epic is [#3](https://github.com/Alexandre-Tortoza/ai-skills/issues/3). Delivery is split into milestones covering foundation, canonical storage, search, MCP/API, repository sync, LLM-assisted evolution, dashboard, hardening and release.
 
-GitHub Issues contain executable engineering specifications. Milestones and native issue relationships represent delivery sequencing; the single GitHub Project **ai-skills Roadmap** is the planning surface for status, priority, Fibonacci weight, estimate, area and target release.
+GitHub Issues contain executable engineering specifications. Milestones, native parent/sub-issue and blocked-by relationships, plus priority/area/Fibonacci-weight labels form the planning surface. GitHub Projects is intentionally not required.
 
 ## Documentation
 
