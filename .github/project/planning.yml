@@ -3,7 +3,7 @@ project:
   title: "ai-skills Roadmap"
   visibility: PUBLIC
   epic: 3
-  target_release: "v0.1"
+  target_release: "v0"
 
 # This file is the reproducible input for GitHub-native planning metadata.
 # Issue bodies remain technical specifications. The workflows materialize
