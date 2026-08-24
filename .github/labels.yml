@@ -1,6 +1,7 @@
 labels:
   # Planning metadata (priority, area, weight, status, release and dates) belongs
-  # in GitHub Projects v2. Keep repository labels focused on issue classification.
+  # in the single ai-skills Roadmap GitHub Project. Keep repository labels focused
+  # on issue classification.
   - { name: "type:epic", color: "5319E7", description: "Top-level outcome spanning multiple issues" }
   - { name: "type:feature", color: "1D76DB", description: "User-facing capability or enhancement" }
   - { name: "type:task", color: "D4C5F9", description: "Internal engineering task" }

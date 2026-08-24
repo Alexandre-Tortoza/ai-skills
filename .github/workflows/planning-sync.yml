@@ -12,9 +12,14 @@ permissions:
   contents: read
   issues: write
 
+concurrency:
+  group: native-issue-relationships
+  cancel-in-progress: false
+
 jobs:
   relationships:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     env:
       GH_TOKEN: ${{ github.token }}
     steps:
@@ -23,7 +28,7 @@ jobs:
       - name: Convert planning YAML to JSON
         run: ruby -ryaml -rjson -e 'puts JSON.generate(YAML.load_file(".github/project/planning.yml"))' > "$RUNNER_TEMP/planning.json"
 
-      - name: Synchronize Epic children and blocked-by relationships
+      - name: Synchronize parent/sub-issue and blocked-by relationships
         shell: bash
         run: |
           set -euo pipefail
@@ -32,9 +37,6 @@ jobs:
           repo="$GITHUB_REPOSITORY"
           epic=$(jq -r '.project.epic' "$plan")
 
-          # GitHub recommends serializing mutating API requests to avoid
-          # secondary rate limiting. This helper also makes a partially applied
-          # planning migration self-healing on the next run.
           api_post() {
             local endpoint="$1"
             shift
@@ -56,28 +58,30 @@ jobs:
             return 1
           }
 
-          # Parent/sub-issue hierarchy. Read first, then add only missing
-          # relationships. Existing successful work from a previous run is kept.
-          existing_children=$(gh api \
-            -H "X-GitHub-Api-Version: 2026-03-10" \
-            "repos/$repo/issues/$epic/sub_issues?per_page=100" \
-            --jq '.[].number' | sort -n || true)
-
-          while read -r issue; do
+          # The default parent is the product Epic. Individual issues may declare
+          # a nested parent, e.g. distribution issues under #64.
+          while IFS='|' read -r issue parent; do
             [[ -z "$issue" || "$issue" == "$epic" ]] && continue
-            if grep -qx "$issue" <<<"$existing_children"; then
+            [[ -z "$parent" || "$parent" == "null" ]] && parent="$epic"
+
+            current_parent=$(gh api \
+              -H "X-GitHub-Api-Version: 2026-03-10" \
+              "repos/$repo/issues/$issue" \
+              --jq '.parent.number // empty' 2>/dev/null || true)
+
+            if [[ "$current_parent" == "$parent" ]]; then
               continue
             fi
 
             issue_id=$(gh api "repos/$repo/issues/$issue" --jq '.id')
-            api_post "repos/$repo/issues/$epic/sub_issues" \
+            api_post "repos/$repo/issues/$parent/sub_issues" \
               -F sub_issue_id="$issue_id" \
               -F replace_parent=true
-            echo "added #$issue as sub-issue of #$epic"
-          done < <(jq -r '.issues | keys[]' "$plan" | sort -n)
+            echo "set parent of #$issue to #$parent"
+          done < <(jq -r '.issues | to_entries[] | "\(.key)|\(.value.parent // empty)"' "$plan" | sort -t'|' -k1,1n)
 
-          # Dependencies are additive: manual relationships are preserved. The
-          # manifest guarantees that every declared prerequisite exists natively.
+          # Dependencies are additive so manually added relationships are not
+          # silently removed. Every manifest prerequisite is guaranteed natively.
           while IFS='|' read -r issue deps; do
             [[ -z "$issue" || -z "$deps" ]] && continue
 
@@ -96,7 +100,7 @@ jobs:
               blocker_id=$(gh api "repos/$repo/issues/$blocker" --jq '.id')
               api_post "repos/$repo/issues/$issue/dependencies/blocked_by" \
                 -F issue_id="$blocker_id"
-              echo "#${issue} blocked by #${blocker}"
+              echo "#$issue blocked by #$blocker"
             done
           done < <(ruby -ryaml -e '
             p = YAML.load_file(".github/project/planning.yml")

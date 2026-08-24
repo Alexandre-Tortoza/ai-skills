@@ -58,7 +58,6 @@ jobs:
                   color: String(label.color).replace('#', ''),
                   description: label.description ?? '',
                 });
-                core.info(`updated label: ${label.name}`);
               } else {
                 await github.rest.issues.createLabel({
                   owner,
@@ -67,7 +66,6 @@ jobs:
                   color: String(label.color).replace('#', ''),
                   description: label.description ?? '',
                 });
-                core.info(`created label: ${label.name}`);
               }
             }
 
@@ -79,10 +77,14 @@ jobs:
               state: 'all',
               per_page: 100,
             });
-            const milestonesByTitle = new Map(existingMilestones.map(milestone => [milestone.title, milestone]));
+            const milestonesByNumber = new Map(existingMilestones.map(m => [m.number, m]));
+            const milestonesByTitle = new Map(existingMilestones.map(m => [m.title, m]));
 
             for (const milestone of milestones) {
-              const existing = milestonesByTitle.get(milestone.title);
+              const existing = milestone.number
+                ? milestonesByNumber.get(Number(milestone.number))
+                : milestonesByTitle.get(milestone.title);
+
               if (existing) {
                 await github.rest.issues.updateMilestone({
                   owner,

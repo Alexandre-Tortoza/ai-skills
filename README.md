@@ -62,13 +62,13 @@ See [SECURITY.md](SECURITY.md) for the security invariants.
 
 There is no supported installation yet. Do not clone `main` expecting a working tool.
 
-The v0.1 release must provide a low-friction installation surface and verified prebuilt artifacts before the project is considered ready for general use. Packaging work is tracked in [#59](https://github.com/Alexandre-Tortoza/ai-skills/issues/59) and build-once/repackage-many distribution in [#64](https://github.com/Alexandre-Tortoza/ai-skills/issues/64).
+The v0 release must provide a low-friction installation surface and verified prebuilt artifacts before the project is considered ready for general use. Packaging work is tracked in [#59](https://github.com/Alexandre-Tortoza/ai-skills/issues/59) and build-once/repackage-many distribution in [#64](https://github.com/Alexandre-Tortoza/ai-skills/issues/64).
 
 ## Roadmap
 
 The product Epic is [#3](https://github.com/Alexandre-Tortoza/ai-skills/issues/3). Delivery is split into milestones covering foundation, canonical storage, search, MCP/API, repository sync, LLM-assisted evolution, dashboard, hardening and release.
 
-GitHub Issues contain executable engineering specifications. Milestones and native issue relationships represent delivery sequencing; GitHub Projects v2 is the planning surface for priority, Fibonacci weight, estimate, area and release targeting.
+GitHub Issues contain executable engineering specifications. Milestones and native issue relationships represent delivery sequencing; the single GitHub Project **ai-skills Roadmap** is the planning surface for status, priority, Fibonacci weight, estimate, area and target release.
 
 ## Documentation
 

@@ -9,7 +9,7 @@ Thank you for considering a contribution. `ai-skills` is currently pre-alpha, so
 - For non-trivial changes, start from or create an issue with objective, scope, acceptance criteria, validation strategy and risks.
 - Use the Issue Forms in `.github/ISSUE_TEMPLATE/` rather than free-form planning when possible.
 
-Priority, area, Fibonacci weight, delivery status, target release and dates belong in GitHub Projects v2. Parent/sub-issue and blocked-by relationships belong in GitHub's native issue relationships. Do not duplicate these planning fields in the issue body.
+Priority, area, Fibonacci weight, delivery status, target release and dates belong in the single GitHub Project **ai-skills Roadmap**. Parent/sub-issue and blocked-by relationships belong in GitHub's native issue relationships. Do not duplicate these planning fields in the issue body.
 
 ## Development workflow
 
