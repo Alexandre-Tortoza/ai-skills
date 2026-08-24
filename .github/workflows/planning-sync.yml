@@ -1,0 +1,87 @@
+name: Sync native issue relationships
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/project/planning.yml
+      - .github/workflows/planning-sync.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  relationships:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Convert planning YAML to JSON
+        run: ruby -ryaml -rjson -e 'puts JSON.generate(YAML.load_file(".github/project/planning.yml"))' > "$RUNNER_TEMP/planning.json"
+
+      - name: Synchronize Epic children and blocked-by relationships
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          plan="$RUNNER_TEMP/planning.json"
+          repo="$GITHUB_REPOSITORY"
+          epic=$(jq -r '.project.epic' "$plan")
+
+          # Parent/sub-issue hierarchy. Use the REST API so repeated runs are
+          # idempotent and do not depend on prose references in issue bodies.
+          existing_children=$(gh api \
+            -H "X-GitHub-Api-Version: 2026-03-10" \
+            "repos/$repo/issues/$epic/sub_issues?per_page=100" \
+            --jq '.[].number' | sort -n || true)
+
+          while read -r issue; do
+            [[ -z "$issue" || "$issue" == "$epic" ]] && continue
+            if grep -qx "$issue" <<<"$existing_children"; then
+              continue
+            fi
+            issue_id=$(gh api "repos/$repo/issues/$issue" --jq '.id')
+            gh api --method POST \
+              -H "X-GitHub-Api-Version: 2026-03-10" \
+              "repos/$repo/issues/$epic/sub_issues" \
+              -F sub_issue_id="$issue_id" \
+              -F replace_parent=true >/dev/null
+            echo "added #$issue as sub-issue of #$epic"
+            sleep 0.25
+          done < <(jq -r '.issues | keys[]' "$plan" | sort -n)
+
+          # Dependencies are additive: manual relationships are preserved. The
+          # manifest guarantees that declared dependencies exist natively.
+          while IFS='|' read -r issue deps; do
+            [[ -z "$issue" || -z "$deps" ]] && continue
+
+            existing=$(gh api \
+              -H "X-GitHub-Api-Version: 2026-03-10" \
+              "repos/$repo/issues/$issue/dependencies/blocked_by?per_page=100" \
+              --jq '.[].number' | sort -n || true)
+
+            IFS=',' read -ra blockers <<<"$deps"
+            for blocker in "${blockers[@]}"; do
+              [[ -z "$blocker" ]] && continue
+              if grep -qx "$blocker" <<<"$existing"; then
+                continue
+              fi
+              blocker_id=$(gh api "repos/$repo/issues/$blocker" --jq '.id')
+              gh api --method POST \
+                -H "X-GitHub-Api-Version: 2026-03-10" \
+                "repos/$repo/issues/$issue/dependencies/blocked_by" \
+                -F issue_id="$blocker_id" >/dev/null
+              echo "#${issue} blocked by #${blocker}"
+              sleep 0.25
+            done
+          done < <(ruby -ryaml -e '
+            p = YAML.load_file(".github/project/planning.yml")
+            p.fetch("issues").each do |n, meta|
+              deps = Array(meta["blocked_by"])
+              puts "#{n}|#{deps.join(",")}" unless deps.empty?
+            end
+          ')

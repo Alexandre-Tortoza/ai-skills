@@ -1,4 +1,4 @@
-name: Bootstrap GitHub Project v2
+name: Bootstrap and sync GitHub Project v2
 
 on:
   workflow_dispatch:
@@ -7,32 +7,49 @@ permissions:
   contents: read
 
 jobs:
-  bootstrap:
+  sync:
     runs-on: ubuntu-latest
-    if: ${{ secrets.PROJECTS_TOKEN != '' }}
     env:
       GH_TOKEN: ${{ secrets.PROJECTS_TOKEN }}
     steps:
       - uses: actions/checkout@v4
+
+      - name: Verify Projects credential
+        shell: bash
+        run: |
+          if [[ -z "${GH_TOKEN:-}" ]]; then
+            echo "::error::Configure repository secret PROJECTS_TOKEN with GitHub Projects 'project' scope and Issues read/write access, then dispatch this workflow again."
+            exit 1
+          fi
+          gh auth status
+
+      - name: Convert planning YAML to JSON
+        run: ruby -ryaml -rjson -e 'puts JSON.generate(YAML.load_file(".github/project/planning.yml"))' > "$RUNNER_TEMP/planning.json"
+
       - name: Ensure project, repository link and planning fields
         shell: bash
         run: |
           set -euo pipefail
-          owner="${GITHUB_REPOSITORY_OWNER}"
-          repo="${GITHUB_REPOSITORY}"
-          title="ai-skills Roadmap"
+
+          plan="$RUNNER_TEMP/planning.json"
+          owner="$GITHUB_REPOSITORY_OWNER"
+          repo_name="${GITHUB_REPOSITORY#*/}"
+          title=$(jq -r '.project.title' "$plan")
+          visibility=$(jq -r '.project.visibility // "PUBLIC"' "$plan")
 
           project_number=$(gh project list --owner "$owner" --format json --limit 100 | jq -r --arg title "$title" '.projects[] | select(.title == $title) | .number' | head -n1)
           if [[ -z "$project_number" ]]; then
-            gh project create --owner "$owner" --title "$title"
-            project_number=$(gh project list --owner "$owner" --format json --limit 100 | jq -r --arg title "$title" '.projects[] | select(.title == $title) | .number' | head -n1)
+            project_number=$(gh project create --owner "$owner" --title "$title" --format json --jq '.number')
           fi
 
-          gh project link "$project_number" --owner "$owner" --repo "$repo" || true
+          gh project edit "$project_number" --owner "$owner" \
+            --visibility "$visibility" \
+            --description "Delivery roadmap for ai-skills. Issue bodies are technical specifications; native relationships and Project fields hold planning metadata."
+          gh project link "$project_number" --owner "$owner" --repo "$repo_name" || true
 
           ensure_field() {
             local name="$1" type="$2" options="${3:-}"
-            if gh project field-list "$project_number" --owner "$owner" --format json | jq -e --arg name "$name" '.fields[] | select(.name == $name)' >/dev/null; then
+            if gh project field-list "$project_number" --owner "$owner" --format json --limit 100 | jq -e --arg name "$name" '.fields[] | select(.name == $name)' >/dev/null; then
               echo "field exists: $name"
               return
             fi
@@ -44,10 +61,50 @@ jobs:
           }
 
           ensure_field "Priority" "SINGLE_SELECT" "P0,P1,P2"
-          ensure_field "Area" "SINGLE_SELECT" "Core,Library,Storage,Search,MCP,API,CLI,Sync,Agents,LLM,Web,Security,DevOps"
+          ensure_field "Area" "SINGLE_SELECT" "Core,Library,Storage,Search,MCP,API,CLI,Sync,Agents,LLM,Web,Security,DevOps,Docs"
           ensure_field "Weight" "NUMBER"
+          ensure_field "Estimate (days)" "NUMBER"
           ensure_field "Target release" "SINGLE_SELECT" "v0.1,Post-v0.1"
           ensure_field "Start date" "DATE"
           ensure_field "Target date" "DATE"
 
-          echo "Project #$project_number configured. Built-in Status, Labels, Assignees and Milestone fields remain available automatically."
+          echo "$project_number" > "$RUNNER_TEMP/project_number"
+
+      - name: Add roadmap issues and set Project fields
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          plan="$RUNNER_TEMP/planning.json"
+          project_number=$(cat "$RUNNER_TEMP/project_number")
+          owner="$GITHUB_REPOSITORY_OWNER"
+          release=$(jq -r '.project.target_release' "$plan")
+
+          while IFS='|' read -r issue priority area weight estimate; do
+            url="https://github.com/$GITHUB_REPOSITORY/issues/$issue"
+
+            gh project item-add "$project_number" --owner "$owner" --url "$url" >/dev/null 2>&1 || true
+            gh project item-edit "$project_number" --owner "$owner" --url "$url" --field "Priority" --value "$priority"
+            gh project item-edit "$project_number" --owner "$owner" --url "$url" --field "Area" --value "$area"
+            gh project item-edit "$project_number" --owner "$owner" --url "$url" --field "Weight" --number "$weight"
+            gh project item-edit "$project_number" --owner "$owner" --url "$url" --field "Estimate (days)" --number "$estimate"
+            gh project item-edit "$project_number" --owner "$owner" --url "$url" --field "Target release" --value "$release"
+
+            echo "synced #$issue"
+          done < <(ruby -ryaml -e '
+            p = YAML.load_file(".github/project/planning.yml")
+            p.fetch("issues").each do |n, meta|
+              puts [n, meta.fetch("priority"), meta.fetch("area"), meta.fetch("weight"), meta.fetch("estimate_days")].join("|")
+            end
+          ')
+
+      - name: Remove legacy planning labels after successful Project migration
+        shell: bash
+        run: |
+          set -euo pipefail
+          for label in $(gh label list --repo "$GITHUB_REPOSITORY" --limit 200 --json name --jq '.[].name | select(test("^(priority|weight|area|status):"))'); do
+            gh label delete "$label" --repo "$GITHUB_REPOSITORY" --yes
+          done
+
+          project_number=$(cat "$RUNNER_TEMP/project_number")
+          echo "Project #$project_number is configured and populated."
