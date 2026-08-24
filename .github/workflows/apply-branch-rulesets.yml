@@ -13,7 +13,7 @@ jobs:
     env:
       GH_TOKEN: ${{ secrets.REPOSITORY_ADMIN_TOKEN }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Require repository administration token
         shell: bash
