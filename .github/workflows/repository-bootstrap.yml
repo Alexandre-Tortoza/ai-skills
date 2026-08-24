@@ -1,0 +1,209 @@
+name: Finalize repository administration
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/repository-bootstrap.yml
+      - .github/workflows/project-v2.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  finalize:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.REPOSITORY_ADMIN_TOKEN }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: main
+
+      - name: Require temporary administration token
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -z "${GH_TOKEN:-}" ]]; then
+            echo "::error::REPOSITORY_ADMIN_TOKEN is required for the one-time repository bootstrap."
+            exit 1
+          fi
+          gh auth status
+
+      - name: Configure repository collaboration settings
+        shell: bash
+        run: |
+          set -euo pipefail
+          repo="$GITHUB_REPOSITORY"
+
+          jq -n '{
+            has_issues: true,
+            has_projects: true,
+            has_wiki: false,
+            has_discussions: true,
+            allow_squash_merge: true,
+            allow_merge_commit: true,
+            allow_rebase_merge: false,
+            allow_auto_merge: true,
+            delete_branch_on_merge: true,
+            allow_update_branch: true,
+            use_squash_pr_title_as_default: true
+          }' | gh api --method PATCH "repos/$repo" --input - >/dev/null
+
+          jq -n '{names:["ai-agents","agent-skills","mcp","llm","rust","developer-tools","open-source","knowledge-management"]}' \
+            | gh api --method PUT "repos/$repo/topics" --input - >/dev/null
+
+      - name: Enable repository security features
+        shell: bash
+        run: |
+          set -euo pipefail
+          repo="$GITHUB_REPOSITORY"
+          api_version="2026-03-10"
+
+          gh api --method PUT -H "X-GitHub-Api-Version: $api_version" "repos/$repo/vulnerability-alerts" >/dev/null
+          gh api --method PUT -H "X-GitHub-Api-Version: $api_version" "repos/$repo/automated-security-fixes" >/dev/null || \
+            echo "::warning::Automated security fixes could not be enabled yet; this is non-blocking before dependency manifests exist."
+          gh api --method PUT -H "X-GitHub-Api-Version: $api_version" "repos/$repo/private-vulnerability-reporting" >/dev/null
+
+          # Secret scanning settings can depend on account/product availability.
+          # Attempt them independently and verify the effective state later.
+          jq -n '{security_and_analysis:{secret_scanning:{status:"enabled"},secret_scanning_push_protection:{status:"enabled"}}}' \
+            | gh api --method PATCH -H "X-GitHub-Api-Version: $api_version" "repos/$repo" --input - >/dev/null || \
+            echo "::warning::Secret scanning/push protection could not be changed through the repository endpoint."
+
+      - name: Remove planning metadata duplicated in old issue bodies
+        shell: bash
+        run: |
+          set -euo pipefail
+          repo="$GITHUB_REPOSITORY"
+          for issue in $(seq 5 29); do
+            original="$RUNNER_TEMP/issue-$issue.md"
+            cleaned="$RUNNER_TEMP/issue-$issue-clean.md"
+            gh issue view "$issue" --repo "$repo" --json body --jq '.body' > "$original"
+            python3 - "$original" "$cleaned" <<'PY'
+          import pathlib, re, sys
+          src = pathlib.Path(sys.argv[1]).read_text()
+          src = re.sub(r'(?m)^Parent Epic: #3\s*\n+', '', src)
+          src = re.sub(r'\n## Dependencies\n.*?(?=\n## |\Z)', '', src, flags=re.S)
+          src = re.sub(r'\n## Planning\n.*?(?=\n## |\Z)', '', src, flags=re.S)
+          src = re.sub(r'\n{3,}', '\n\n', src).strip() + '\n'
+          pathlib.Path(sys.argv[2]).write_text(src)
+          PY
+            if ! cmp -s "$original" "$cleaned"; then
+              gh issue edit "$issue" --repo "$repo" --body-file "$cleaned"
+              echo "cleaned planning prose from #$issue"
+              sleep 0.15
+            fi
+          done
+
+      - name: Dispatch and verify managed bootstrap workflows
+        shell: bash
+        run: |
+          set -euo pipefail
+          repo="$GITHUB_REPOSITORY"
+
+          run_workflow() {
+            local workflow="$1"
+            echo "dispatching $workflow"
+            gh workflow run "$workflow" --repo "$repo" --ref main
+
+            local run_id=""
+            for _ in $(seq 1 20); do
+              run_id=$(gh run list --repo "$repo" --workflow "$workflow" --event workflow_dispatch --limit 1 \
+                --json databaseId,createdAt --jq '.[0].databaseId // empty')
+              [[ -n "$run_id" ]] && break
+              sleep 2
+            done
+            if [[ -z "$run_id" ]]; then
+              echo "::error::Could not find dispatched run for $workflow"
+              return 1
+            fi
+            gh run watch "$run_id" --repo "$repo" --exit-status
+          }
+
+          run_workflow governance.yml
+          run_workflow planning-sync.yml
+          run_workflow apply-branch-rulesets.yml
+          run_workflow project-v2.yml
+
+      - name: Verify project migration and native planning cleanup
+        shell: bash
+        run: |
+          set -euo pipefail
+          repo="$GITHUB_REPOSITORY"
+          owner="$GITHUB_REPOSITORY_OWNER"
+          title=$(ruby -ryaml -e 'puts YAML.load_file(".github/project/planning.yml").fetch("project").fetch("title")')
+          expected=$(ruby -ryaml -e 'puts YAML.load_file(".github/project/planning.yml").fetch("issues").size')
+          number=$(gh project list --owner "$owner" --format json --limit 100 | jq -r --arg title "$title" '.projects[] | select(.title == $title) | .number' | head -n1)
+          [[ -n "$number" ]] || { echo "::error::Roadmap Project was not created"; exit 1; }
+          actual=$(gh project item-list "$number" --owner "$owner" --format json --limit 500 --jq '.items | length')
+          (( actual >= expected )) || { echo "::error::Roadmap has $actual/$expected expected items"; exit 1; }
+
+          legacy=$(gh label list --repo "$repo" --limit 200 --json name --jq '[.[].name | select(test("^(priority|weight|area|status):"))] | length')
+          [[ "$legacy" == "0" ]] || { echo "::error::$legacy legacy planning labels remain"; exit 1; }
+
+      - name: Delete every non-environment branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          repo="$GITHUB_REPOSITORY"
+          while IFS= read -r branch; do
+            case "$branch" in
+              dev|qa|main) continue ;;
+            esac
+            echo "deleting branch: $branch"
+            gh api --method DELETE "repos/$repo/git/refs/heads/$branch" >/dev/null
+          done < <(gh api --paginate "repos/$repo/branches?per_page=100" --jq '.[].name')
+
+      - name: Remove failed and cancelled bootstrap Action history
+        shell: bash
+        run: |
+          set -euo pipefail
+          repo="$GITHUB_REPOSITORY"
+          current="$GITHUB_RUN_ID"
+          gh api --paginate "repos/$repo/actions/runs?per_page=100" \
+            --jq '.workflow_runs[] | select(.status == "completed") | select(.conclusion == "failure" or .conclusion == "cancelled" or .conclusion == "timed_out" or .conclusion == "action_required" or .conclusion == "stale") | [.id,.name,.conclusion] | @tsv' \
+            > "$RUNNER_TEMP/failed-runs.tsv"
+
+          while IFS=$'\t' read -r id name conclusion; do
+            [[ -z "$id" || "$id" == "$current" ]] && continue
+            echo "deleting run $id: $name ($conclusion)"
+            gh api --method DELETE "repos/$repo/actions/runs/$id" >/dev/null || true
+          done < "$RUNNER_TEMP/failed-runs.tsv"
+
+      - name: Final verification
+        shell: bash
+        run: |
+          set -euo pipefail
+          repo="$GITHUB_REPOSITORY"
+
+          mapfile -t branches < <(gh api --paginate "repos/$repo/branches?per_page=100" --jq '.[].name' | sort)
+          actual=$(printf '%s\n' "${branches[@]}")
+          expected=$'dev\nmain\nqa'
+          if [[ "$actual" != "$expected" ]]; then
+            printf '::error::Unexpected branch set:\n%s\n' "$actual"
+            exit 1
+          fi
+
+          for branch in dev qa main; do
+            protected=$(gh api "repos/$repo/branches/$branch" --jq '.protected')
+            [[ "$protected" == "true" ]] || { echo "::error::$branch is not protected"; exit 1; }
+            gh api -H "X-GitHub-Api-Version: 2026-03-10" "repos/$repo/rules/branches/$branch" >/dev/null
+          done
+
+          settings=$(gh api "repos/$repo")
+          jq -e '
+            .default_branch == "main" and
+            .has_wiki == false and
+            .has_discussions == true and
+            .allow_rebase_merge == false and
+            .allow_auto_merge == true and
+            .delete_branch_on_merge == true and
+            .allow_update_branch == true
+          ' <<<"$settings" >/dev/null
+
+          gh api -H "X-GitHub-Api-Version: 2026-03-10" "repos/$repo/private-vulnerability-reporting" --jq '.enabled' | grep -qx true
+          gh api -H "X-GitHub-Api-Version: 2026-03-10" "repos/$repo/vulnerability-alerts" >/dev/null
+
+          echo "Repository bootstrap completed successfully. It is now safe to remove REPOSITORY_ADMIN_TOKEN after this run finishes."
