@@ -1,0 +1,28 @@
+name: Disable main auto-merge
+
+on:
+  pull_request:
+    branches:
+      - main
+    types:
+      - auto_merge_enabled
+
+permissions:
+  pull-requests: write
+
+jobs:
+  disable:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require a maintainer to merge production promotions
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PULL_REQUEST_ID: ${{ github.event.pull_request.node_id }}
+        run: >-
+          gh api graphql
+          -f query='mutation($pullRequestId: ID!) {
+          disablePullRequestAutoMerge(input: {pullRequestId: $pullRequestId}) {
+          pullRequest { number }
+          }
+          }'
+          -f pullRequestId="$PULL_REQUEST_ID"

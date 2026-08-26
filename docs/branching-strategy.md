@@ -48,7 +48,7 @@ Desired branch rules are versioned under `.github/rulesets/`. GitHub does not ap
 
 That workflow requires a repository secret named `REPOSITORY_ADMIN_TOKEN` containing a fine-grained token with **Administration: write** permission for this repository. This permission is required by GitHub's repository-rulesets API.
 
-After applying the rulesets, GitHub should report `dev` and `main` as protected. Repository auto-merge must remain enabled for `dev`; the `main` ruleset requires a human approval, so a promotion cannot merge automatically. The `Your main branch isn't protected` warning is then resolved by the active `main` ruleset.
+After applying the rulesets, GitHub should report `dev` and `main` as protected. Repository auto-merge must remain enabled for `dev`; the `Disable main auto-merge` workflow cancels auto-merge for every promotion to `main`, which must receive human approval and a manual merge. The `Your main branch isn't protected` warning is then resolved by the active `main` ruleset.
 
 ## Future tightening
 
