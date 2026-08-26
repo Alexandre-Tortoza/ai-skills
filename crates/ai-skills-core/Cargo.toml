@@ -1,0 +1,11 @@
+[package]
+name = "ai-skills-core"
+description = "Framework-independent ai-skills domain and application ports."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[lints]
+workspace = true
