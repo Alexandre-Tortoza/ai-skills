@@ -7,6 +7,7 @@ This directory contains the detailed engineering and operational documentation f
 - [Open-source readiness](open-source-readiness.md), minimum bar before v0 is presented as ready.
 - [Planning model](planning.md), GitHub Issues, labels, native relationships and milestones without GitHub Projects.
 - [Branching and promotion](branching-strategy.md), issue branches merge into `dev`, then completed milestones promote from `dev` to `main`.
+- [Architecture decisions](adr/0001-canonical-content-and-human-approval.md), durable source-of-truth and human-approval invariants.
 - [Release policy](releasing.md), tag-driven releases and build-once/repackage-many rules.
 - [Security policy](../SECURITY.md), current trust and mutation invariants.
 - [Contributing](../CONTRIBUTING.md), contributor workflow.
