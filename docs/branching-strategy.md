@@ -1,12 +1,11 @@
 # Branching and promotion strategy
 
-`ai-skills` uses three long-lived environment branches and short-lived topic branches.
+`ai-skills` uses two long-lived branches and one short-lived branch per issue.
 
 ```mermaid
 flowchart LR
-    T[feature / fix / docs / chore branches] -->|Pull request| D[dev]
-    D -->|Promotion pull request| Q[qa]
-    Q -->|Production promotion pull request| M[main]
+    T[feature / fix / hotfix branches] -->|Issue pull request| D[dev]
+    D -->|Completed milestone promotion pull request| M[main]
     M -->|version tag| R[Release]
 ```
 
@@ -14,34 +13,34 @@ flowchart LR
 
 | Branch | Purpose | Accepted pull requests |
 | --- | --- | --- |
-| `dev` | Integration branch for normal development | Topic branches and forks |
-| `qa` | Release-candidate and validation branch | `dev` only |
-| `main` | Production/source of stable releases | `qa` only |
+| `dev` | Integration branch for issue work | `feature/*`, `fix/*`, `hotfix/*`, and forks |
+| `main` | Production/source of stable releases | `dev` only |
 
 `main` remains the repository default branch because it represents the stable public state of the project. Contributors should normally target `dev`.
 
 ## Rules
 
-All three long-lived branches must be protected by GitHub repository rulesets.
+Both long-lived branches must be protected by GitHub repository rulesets.
 
 - Changes arrive through pull requests.
 - Force pushes are forbidden.
 - Branch deletion is forbidden.
 - Review conversations must be resolved before merge.
 - The `Validate promotion path` status check is required and strict.
-- `qa` only accepts a promotion PR from the repository's `dev` branch.
-- `main` only accepts a production promotion PR from the repository's `qa` branch.
-- Topic/fork pull requests target `dev`.
+- One `feature/*`, `fix/*`, or `hotfix/*` branch represents one issue and targets `dev`.
+- `dev` allows auto-merge after required checks, without an approving review.
+- When every issue in a milestone is merged into `dev`, a maintainer opens one promotion pull request from `dev` to `main`.
+- `main` only accepts that promotion pull request from the repository's `dev` branch and requires human approval before manual merge.
 
-The repository intentionally starts with zero mandatory approvals so a solo maintainer is not locked out. Once a second active maintainer exists, the production ruleset should be tightened to require at least one independent approval and, where appropriate, CODEOWNERS review.
+The integration branch intentionally requires zero approvals. The production ruleset requires one approval for the milestone promotion so it cannot merge automatically.
 
 ## Merge methods
 
-Topic branches into `dev` may use squash, rebase or merge according to the change. Promotions `dev -> qa` and `qa -> main` use merge commits so the promoted branch ancestry remains explicit and subsequent promotions remain straightforward.
+Issue branches into `dev` may use squash, rebase, or merge according to the change. The `dev -> main` milestone promotion uses a merge commit so the promoted branch ancestry remains explicit.
 
 ## Hotfixes
 
-Production fixes still follow the controlled flow. Create a hotfix topic branch from the current `main`, apply the fix, and merge it through `dev -> qa -> main`. If an emergency policy is introduced later, it must be represented explicitly in the repository ruleset and audit trail rather than relying on untracked direct pushes.
+Production fixes still follow the controlled flow. Create a `hotfix/<name>` branch, merge it into `dev`, then include it in the next completed-milestone promotion to `main`. If an emergency policy is introduced later, it must be represented explicitly in the repository ruleset and audit trail rather than relying on untracked direct pushes.
 
 ## GitHub rulesets
 
@@ -49,7 +48,7 @@ Desired branch rules are versioned under `.github/rulesets/`. GitHub does not ap
 
 That workflow requires a repository secret named `REPOSITORY_ADMIN_TOKEN` containing a fine-grained token with **Administration: write** permission for this repository. This permission is required by GitHub's repository-rulesets API.
 
-After applying the rulesets, GitHub should report `dev`, `qa` and `main` as protected. The `Your main branch isn't protected` warning is then resolved by the active `main` ruleset.
+After applying the rulesets, GitHub should report `dev` and `main` as protected. Repository auto-merge must remain enabled for `dev`; the `main` ruleset requires a human approval, so a promotion cannot merge automatically. The `Your main branch isn't protected` warning is then resolved by the active `main` ruleset.
 
 ## Future tightening
 
