@@ -38,6 +38,8 @@ The integration branch intentionally requires zero approvals. The production rul
 
 Issue branches into `dev` may use squash, rebase, or merge according to the change. The `dev -> main` milestone promotion uses a merge commit so the promoted branch ancestry remains explicit.
 
+GitHub automatically deletes a merged issue branch from the remote. Once the integration PR is merged into `dev`, delete its local branch after fetching `dev`. Never delete the long-lived `dev` or `main` branches.
+
 ## Hotfixes
 
 Production fixes still follow the controlled flow. Create a `hotfix/<name>` branch, merge it into `dev`, then include it in the next completed-milestone promotion to `main`. If an emergency policy is introduced later, it must be represented explicitly in the repository ruleset and audit trail rather than relying on untracked direct pushes.

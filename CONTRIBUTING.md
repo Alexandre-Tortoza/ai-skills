@@ -30,8 +30,9 @@ feature/<name> | fix/<name> | hotfix/<name> -> dev -> main
 7. Update documentation and `CHANGELOG.md` when behavior visible to users changes.
 8. Record durable architectural decisions as ADRs under `docs/adr/` once the ADR process is established.
 9. Merge into `dev` may be automated once required checks pass; it requires no approving review.
-10. After every issue in a milestone is merged into `dev`, open a `dev -> main` promotion pull request.
-11. A human must review and manually merge the `dev -> main` promotion pull request.
+10. GitHub deletes the merged issue branch; remove its local branch after fetching `dev`.
+11. After every issue in a milestone is merged into `dev`, open a `dev -> main` promotion pull request.
+12. A human must review and manually merge the `dev -> main` promotion pull request.
 
 Do not open issue pull requests directly against `main`.
 
