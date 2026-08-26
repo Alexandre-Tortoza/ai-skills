@@ -1,0 +1,17 @@
+version = 1
+
+[server]
+bind = "127.0.0.1:8787"
+
+[storage]
+path = ".ai-skills"
+
+[search]
+max_results = 20
+
+# Optional. Environment values override this file, for example
+# AI_SKILLS_EMBEDDING__API_KEY. Do not place real secrets in this file.
+#[embedding]
+#provider = "openai-compatible"
+#model = "text-embedding-3-small"
+#dimensions = 1536
