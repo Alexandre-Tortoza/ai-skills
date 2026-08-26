@@ -16,23 +16,24 @@ Priority, area, Fibonacci weight, delivery status, target release and dates belo
 The repository uses the promotion flow documented in [`docs/branching-strategy.md`](docs/branching-strategy.md):
 
 ```text
-feature/fix/docs/chore -> dev -> qa -> main
+feature/<name> | fix/<name> | hotfix/<name> -> dev -> main
 ```
 
-`main` is production/stable, `qa` is validation, and `dev` is the normal integration target.
+`main` is production/stable and `dev` is the normal integration target.
 
 1. Start from the current `dev` branch for normal work.
-2. Create a focused branch such as `feat/...`, `fix/...`, `refactor/...`, `docs/...` or `chore/...`.
+2. Create one focused `feature/<name>`, `fix/<name>`, or `hotfix/<name>` branch for each issue.
 3. Open the pull request against `dev`. External fork pull requests also target `dev`.
-4. Keep one pull request centered on one reviewable outcome.
+4. Keep one pull request centered on that issue's reviewable outcome.
 5. Link the issue with `Closes #<number>` when the PR fully resolves it.
 6. Add or update automated tests for changed behavior and failure cases.
 7. Update documentation and `CHANGELOG.md` when behavior visible to users changes.
 8. Record durable architectural decisions as ADRs under `docs/adr/` once the ADR process is established.
-9. Promotion to `qa` happens only through a `dev -> qa` pull request.
-10. Promotion to production happens only through a `qa -> main` pull request.
+9. Merge into `dev` may be automated once required checks pass; it requires no approving review.
+10. After every issue in a milestone is merged into `dev`, open a `dev -> main` promotion pull request.
+11. A human must review and manually merge the `dev -> main` promotion pull request.
 
-Do not open feature/fix pull requests directly against `qa` or `main`.
+Do not open issue pull requests directly against `main`.
 
 Standard repository commands such as `bin/setup` and `bin/check` are tracked by #65. Until they exist, follow commands supported by the current checkout; do not introduce undocumented personal scripts as required contributor steps.
 

@@ -4,7 +4,6 @@ on:
   pull_request:
     branches:
       - dev
-      - qa
       - main
 
 permissions:
@@ -34,24 +33,23 @@ jobs:
 
           case "$BASE_BRANCH" in
             dev)
-              # Contributions and topic branches enter through dev. Fork PRs are
-              # intentionally supported for open-source contributors.
-              if [[ "$HEAD_REPOSITORY" == "$BASE_REPOSITORY" && ( "$HEAD_BRANCH" == "qa" || "$HEAD_BRANCH" == "main" ) ]]; then
-                echo "::error::qa/main cannot be merged backwards directly into dev. Use a dedicated sync/fix branch."
-                exit 1
-              fi
-              ;;
-
-            qa)
-              if [[ "$HEAD_REPOSITORY" != "$BASE_REPOSITORY" || "$HEAD_BRANCH" != "dev" ]]; then
-                echo "::error::qa only accepts promotion pull requests from the repository dev branch."
-                exit 1
+              # Repository-owned issue work must use one of the supported prefixes.
+              # Forks retain the same dev target for open-source contributions.
+              if [[ "$HEAD_REPOSITORY" == "$BASE_REPOSITORY" ]]; then
+                case "$HEAD_BRANCH" in
+                  feature/*|fix/*|hotfix/*)
+                    ;;
+                  *)
+                    echo "::error::dev only accepts feature/*, fix/*, or hotfix/* branches from this repository."
+                    exit 1
+                    ;;
+                esac
               fi
               ;;
 
             main)
-              if [[ "$HEAD_REPOSITORY" != "$BASE_REPOSITORY" || "$HEAD_BRANCH" != "qa" ]]; then
-                echo "::error::main is production and only accepts promotion pull requests from the repository qa branch."
+              if [[ "$HEAD_REPOSITORY" != "$BASE_REPOSITORY" || "$HEAD_BRANCH" != "dev" ]]; then
+                echo "::error::main only accepts a completed-milestone promotion pull request from the repository dev branch."
                 exit 1
               fi
               ;;
