@@ -16,6 +16,8 @@ This directory contains the detailed engineering and operational documentation f
 
 Architecture documents and ADRs will be added alongside implementation. They should describe verified behavior and durable decisions rather than speculative code structure.
 
+- [Rust workspace](architecture/workspace.md), crate responsibilities, dependency direction, and safety lint policy.
+
 Planned areas include:
 
 - domain and workspace boundaries;

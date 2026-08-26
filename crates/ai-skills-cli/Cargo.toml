@@ -1,0 +1,20 @@
+[package]
+name = "ai-skills-cli"
+description = "Command-line composition root for ai-skills."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[[bin]]
+name = "ai-skills"
+path = "src/main.rs"
+
+[dependencies]
+ai-skills-mcp = { path = "../ai-skills-mcp" }
+ai-skills-sync = { path = "../ai-skills-sync" }
+ai-skills-web = { path = "../ai-skills-web" }
+
+[lints]
+workspace = true
